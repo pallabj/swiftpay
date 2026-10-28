@@ -1,0 +1,17 @@
+{
+  "name": "swiftpay-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local demo API for the SwiftPay wallet app",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
