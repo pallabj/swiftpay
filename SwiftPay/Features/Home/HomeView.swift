@@ -21,7 +21,7 @@ struct HomeView: View {
                         currency: wallet.currency,
                         onSendMoney: {}
                     ).padding()
-                }
+                }.refreshable(action: viewModel.loadWallet)
             } else if let errorMessage = viewModel.errorMessage {
                 VStack(spacing: 16) {
                     ContentUnavailableView(
