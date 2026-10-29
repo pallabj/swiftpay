@@ -1,6 +1,6 @@
 # SwiftPay Backend
 
-A small Node.js and Express API for the SwiftPay demo app. Transfers are simulated and stored locally; the API never moves money.
+Small Node.js and Express support API for the SwiftPay app. It serves one fictional demo user and stores wallet data in a local JSON file. Transfers are simulated; the API never moves money.
 
 ## Run locally
 
@@ -12,38 +12,55 @@ npm install
 npm start
 ```
 
-The API listens on `http://localhost:3000` by default. Set `PORT` to use a different port. On first startup, the backend creates `data/wallet.json` with demo data. That file persists wallet changes across restarts and is ignored by Git.
+The API listens on `http://localhost:3000` by default. Set `PORT` to use a different port. On first request, the backend creates `data/wallet.json` with a sample balance and transaction history. Wallet balance and transactions persist across restarts. The demo user profile is held in memory and resets when the server restarts.
 
-## Endpoints
+## Home screen APIs
+
+### `GET /wallet`
+
+Returns the current demo user's wallet.
+
+```json
+{
+  "id": "demo-wallet",
+  "userId": "demo-user",
+  "balance": 2450.75,
+  "currency": "USD",
+  "updatedAt": "2026-10-28T00:00:00.000Z"
+}
+```
+
+### `GET /transactions?limit=10&offset=0`
+
+Returns transactions ordered newest first. `limit` defaults to 10 and must be from 1 to 50. `offset` defaults to 0 and must be a non-negative integer.
+
+```json
+{
+  "transactions": [],
+  "pagination": {
+    "limit": 10,
+    "offset": 0,
+    "total": 0,
+    "hasMore": false,
+    "nextOffset": null
+  }
+}
+```
+
+Invalid pagination values return HTTP `400` with an `error` object containing a stable `code` and readable `message`.
+
+## Supporting endpoints
 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/health` | Check whether the API is running |
-| `GET` | `/api/user` | Read the demo user's profile |
-| `GET` | `/api/wallet` | Read the current wallet balance and currency |
-| `GET` | `/api/recipients` | List demo recipients |
-| `GET` | `/api/transactions?limit=20&offset=0` | List transaction history |
-| `GET` | `/api/transactions/:transactionId` | Read transaction details and receipt data |
+| `GET` | `/user` | Read the in-memory demo user's profile |
+| `GET` | `/recipients` | List demo recipients |
+| `GET` | `/transactions/:transactionId` | Read transaction details and receipt data |
 | `POST` | `/api/transfers` | Validate and simulate a wallet transfer |
 
-### Create a simulated transfer
-
-```http
-POST /api/transfers
-Content-Type: application/json
-Idempotency-Key: a-unique-request-id
-```
-
-```json
-{
-  "recipientId": "recipient-1",
-  "amount": 25.5,
-  "note": "Coffee"
-}
-```
-
-Successful transfers return the new transaction and updated wallet balance. Reusing an `Idempotency-Key` returns the original result, preventing a repeated request from creating another debit. Validation errors use an `error` object with a stable `code` and readable `message`. Insufficient balance returns `409`.
+The earlier `/api/wallet` and `/api/transactions` paths remain aliases for the Home screen GET routes.
 
 ## Demo data and limitations
 
-The product brief mentions a public API for demo user and recipient data but does not name its URL. This starter backend serves safe, fictional demo profiles locally until that API is specified. Transactions are mock records, and the JSON file store is intended for local development only; it is not a production database or a multi-user financial system.
+The JSON file store is for a single local demo instance; it is not a production database or a multi-user financial system. The user and recipient records are fictional. No real financial credentials or payment processing are involved.
