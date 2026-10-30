@@ -2,6 +2,7 @@ import Foundation
 
 struct AppDependencies {
     let walletRepository: WalletRepository
+    let transactionRepository: TransactionRepository
 
     init() {
         guard let baseURL = URL(string: "http://localhost:8000") else {
@@ -14,5 +15,6 @@ struct AppDependencies {
         )
 
         walletRepository = WalletRepository(apiClient: apiClient)
+        transactionRepository = TransactionRepository(apiClient: apiClient)
     }
 }

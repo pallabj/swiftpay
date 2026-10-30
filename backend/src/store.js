@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { randomUUID } = require("node:crypto");
+const config = require("./config");
 
 // This demo has one in-memory user. No user profile is written to disk.
 const demoUser = Object.freeze({
@@ -61,6 +62,7 @@ function ensureStore() {
 function readState() {
   ensureStore();
   const state = JSON.parse(fs.readFileSync(dataFile, "utf8"));
+  let hasChanges = false;
 
   // Convert the first backend version's file format without losing demo history.
   if (!state.wallet) {
@@ -73,10 +75,76 @@ function readState() {
     };
     delete state.balance;
     delete state.user;
-    writeState(state);
+    hasChanges = true;
   }
 
+  if (!Array.isArray(state.transactions)) {
+    state.transactions = [];
+    hasChanges = true;
+  }
+  if (!Array.isArray(state.recipients) || state.recipients.length === 0) {
+    state.recipients = initialState.recipients;
+    hasChanges = true;
+  }
+  if (!state.idempotency || typeof state.idempotency !== "object") {
+    state.idempotency = {};
+    hasChanges = true;
+  }
+
+  if (addMissingSeedTransactions(state)) {
+    hasChanges = true;
+  }
+
+  if (hasChanges) writeState(state);
   return state;
+}
+
+function addMissingSeedTransactions(state) {
+  const demoTransactionCount = state.transactions.filter(({ id }) => (
+    typeof id === "string"
+    && (id === "txn-demo-1" || id === "txn-demo-2" || id.startsWith("seed-txn-"))
+  )).length;
+
+  if (demoTransactionCount >= config.seedTransactionCount) return false;
+
+  const existingIds = new Set(state.transactions.map(({ id }) => id));
+  const descriptions = ["Coffee", "Groceries", "Transit", "Utilities", "Subscription"];
+  let seededCount = demoTransactionCount;
+  let index = 1;
+
+  while (seededCount < config.seedTransactionCount) {
+    const id = `seed-txn-${String(index).padStart(3, "0")}`;
+    if (!existingIds.has(id)) {
+      const isCredit = index % 4 === 0;
+      const recipient = state.recipients[(index - 1) % state.recipients.length];
+      const amount = Math.round((8 + ((index * 17.31) % 225)) * 100) / 100;
+      const createdAt = new Date(
+        Date.UTC(2026, 9, 29, 12) - index * 60 * 60 * 1000,
+      ).toISOString();
+
+      const transaction = {
+        id,
+        type: isCredit ? "credit" : "debit",
+        amount,
+        currency: state.wallet.currency,
+        description: isCredit ? "Wallet top-up" : descriptions[index % descriptions.length],
+        status: "completed",
+        createdAt,
+      };
+
+      if (!isCredit) {
+        transaction.recipientId = recipient.id;
+        transaction.recipientName = recipient.name;
+      }
+
+      state.transactions.push(transaction);
+      existingIds.add(id);
+      seededCount += 1;
+    }
+    index += 1;
+  }
+
+  return true;
 }
 
 function writeState(state) {

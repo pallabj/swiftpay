@@ -12,7 +12,25 @@ npm install
 npm start
 ```
 
-The API listens on `http://localhost:3000` by default. Set `PORT` to use a different port. On first request, the backend creates `data/wallet.json` with a sample balance and transaction history. Wallet balance and transactions persist across restarts. The demo user profile is held in memory and resets when the server restarts.
+The API listens on `http://localhost:8000` by default. On first request, the backend creates `data/wallet.json` with a sample balance and transaction history. Wallet balance and transactions persist across restarts. The demo user profile is held in memory and resets when the server restarts.
+
+## Local development settings
+
+The backend reads these environment variables at startup:
+
+| Variable | Default | Description |
+| --- | ---: | --- |
+| `PORT` | `8000` | Port used by the API server |
+| `SEED_TRANSACTION_COUNT` | `100` | Minimum number of demo seed transactions to keep in the JSON store; valid range is 2–10000 |
+| `API_RESPONSE_DELAY_MS` | `1000` | Central delay before each response in milliseconds; set to `0` to disable |
+
+For example, start the dev server with 200 seed transactions and no artificial delay:
+
+```sh
+SEED_TRANSACTION_COUNT=200 API_RESPONSE_DELAY_MS=0 npm run dev
+```
+
+The backend adds missing seed records to an existing `wallet.json` without duplicating them or removing existing transactions. Increasing `SEED_TRANSACTION_COUNT` adds more seed records after restart; lowering it does not delete records.
 
 ## Home screen APIs
 

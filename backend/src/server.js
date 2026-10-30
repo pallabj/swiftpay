@@ -1,8 +1,17 @@
 const express = require("express");
 const { demoUser, readState, writeState, createTransfer } = require("./store");
+const config = require("./config");
 
 const app = express();
-const port = Number(process.env.PORT || 8000);
+const port = config.port;
+
+// Apply one configurable delay centrally to every API response.
+app.use((_request, response, next) => {
+  if (config.apiResponseDelayMs === 0) return next();
+
+  const timer = setTimeout(next, config.apiResponseDelayMs);
+  response.on("close", () => clearTimeout(timer));
+});
 
 app.use(express.json({ limit: "16kb" }));
 
@@ -163,4 +172,6 @@ app.use((error, _request, response, _next) => {
 
 app.listen(port, () => {
   console.log(`SwiftPay API listening on http://localhost:${port}`);
+  console.log(`API response delay: ${config.apiResponseDelayMs} ms`);
+  console.log(`Configured demo transaction count: ${config.seedTransactionCount}`);
 });
