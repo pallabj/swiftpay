@@ -34,6 +34,37 @@ app.get(["/wallet", "/api/wallet"], (_request, response) => {
   });
 });
 
+app.get(["/recipients/lookup", "/api/recipients/lookup"], (request, response) => {
+  const phone = request.query.phone;
+  if (typeof phone !== "string" || !/^\d{10}$/.test(phone)) {
+    return response.status(400).json({
+      error: {
+        code: "INVALID_PHONE_NUMBER",
+        message: "phone must contain exactly 10 digits.",
+      },
+    });
+  }
+
+  const normalizedPhone = `+91${phone}`;
+  const { recipients } = readState();
+  const recipient = recipients.find(({ phone: storedPhone }) => storedPhone === normalizedPhone);
+
+  if (!recipient) {
+    return response.status(404).json({
+      error: {
+        code: "RECIPIENT_NOT_FOUND",
+        message: "No recipient was found for this phone number.",
+      },
+    });
+  }
+
+  return response.json({
+    id: recipient.id,
+    name: recipient.name,
+    phone: recipient.phone,
+  });
+});
+
 app.get("/api/recipients", (_request, response) => {
   const { recipients } = readState();
   response.json({ recipients });

@@ -2,12 +2,18 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
+    
+    
 
-    init(walletRepository: WalletRepository) {
+    init(walletRepository: WalletRepository, onSendMoney: @escaping () -> Void)
+    {
         _viewModel = StateObject(
             wrappedValue: HomeViewModel(walletRepository: walletRepository)
         )
+        self.onSendMoney = onSendMoney
     }
+
+    let onSendMoney: () -> Void
 
     var body: some View {
         Group {
@@ -19,7 +25,7 @@ struct HomeView: View {
                     BalanceCard(
                         balance: wallet.balance,
                         currency: wallet.currency,
-                        onSendMoney: {}
+                        onSendMoney: onSendMoney
                     ).padding()
                 }.refreshable(action: viewModel.loadWallet)
             } else if let errorMessage = viewModel.errorMessage {

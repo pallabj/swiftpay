@@ -67,13 +67,30 @@ Returns transactions ordered newest first. `limit` defaults to 10 and must be fr
 
 Invalid pagination values return HTTP `400` with an `error` object containing a stable `code` and readable `message`.
 
+## Recipient lookup API
+
+### `GET /recipients/lookup?phone=9000000001`
+
+Looks up a recipient by the 10-digit Indian mobile number entered in the app. The backend compares it using the `+91` country code and returns the recipient details:
+
+```json
+{
+  "id": "recipient-1",
+  "name": "Jordan Lee",
+  "phone": "+919000000001"
+}
+```
+
+An invalid phone number returns HTTP `400`. A valid number with no match returns HTTP `404` and error code `RECIPIENT_NOT_FOUND`. Demo lookup numbers are `9000000001`, `9000000002`, and `9000000003`.
+
 ## Supporting endpoints
 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/health` | Check whether the API is running |
 | `GET` | `/user` | Read the in-memory demo user's profile |
-| `GET` | `/recipients` | List demo recipients |
+| `GET` | `/api/recipients` | List demo recipients |
+| `GET` | `/recipients/lookup?phone=...` | Look up a demo recipient by Indian mobile number |
 | `GET` | `/transactions/:transactionId` | Read transaction details and receipt data |
 | `POST` | `/api/transfers` | Validate and simulate a wallet transfer |
 

@@ -23,9 +23,9 @@ const initialState = {
     updatedAt: "2026-10-28T00:00:00.000Z",
   },
   recipients: [
-    { id: "recipient-1", name: "Jordan Lee", email: "jordan@example.test" },
-    { id: "recipient-2", name: "Taylor Kim", email: "taylor@example.test" },
-    { id: "recipient-3", name: "Casey Patel", email: "casey@example.test" },
+    { id: "recipient-1", name: "Jordan Lee", email: "jordan@example.test", phone: "+919000000001" },
+    { id: "recipient-2", name: "Taylor Kim", email: "taylor@example.test", phone: "+919000000002" },
+    { id: "recipient-3", name: "Casey Patel", email: "casey@example.test", phone: "+919000000003" },
   ],
   transactions: [
     {
@@ -85,6 +85,13 @@ function readState() {
   if (!Array.isArray(state.recipients) || state.recipients.length === 0) {
     state.recipients = initialState.recipients;
     hasChanges = true;
+  }
+  for (const recipient of state.recipients) {
+    const demoRecipient = initialState.recipients.find(({ id }) => id === recipient.id);
+    if (!recipient.phone && demoRecipient) {
+      recipient.phone = demoRecipient.phone;
+      hasChanges = true;
+    }
   }
   if (!state.idempotency || typeof state.idempotency !== "object") {
     state.idempotency = {};
