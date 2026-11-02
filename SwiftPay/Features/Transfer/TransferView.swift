@@ -3,6 +3,8 @@ import SwiftUI
 struct TransferView: View {
     @StateObject private var viewModel: TransferViewModel
 
+    @State private var isShowingPINModal = false
+
     init(recipientRepository: RecipientRepository) {
         _viewModel = StateObject(
             wrappedValue: TransferViewModel(
@@ -19,7 +21,15 @@ struct TransferView: View {
                     TransferDetailsFormView(viewModel: viewModel)
 
                 case .review:
-                    Text("Review transfer")
+                    if let recipient = viewModel.recipient {
+                        TransferReviewView(
+                            recipient: recipient,
+                            amount: viewModel.amount,
+                            onConfirm: {
+                                isShowingPINModal = true
+                            }
+                        )
+                    }
 
                 case .pin:
                     Text("Enter PIN")
@@ -39,5 +49,12 @@ struct TransferView: View {
         }
         .navigationTitle("Send Money")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $isShowingPINModal) {
+            PINEntrySheet { _ in
+                isShowingPINModal = false
+            }
+            .presentationDetents([.height(340)])
+            .presentationDragIndicator(.visible)
+        }
     }
 }

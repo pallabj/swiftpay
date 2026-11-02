@@ -101,4 +101,8 @@ final class TransferViewModel: ObservableObject {
         guard canProceed else { return }
         currentStep = .review
     }
+
+    func continueToPIN() {
+        currentStep = .pin
+    }
 }
