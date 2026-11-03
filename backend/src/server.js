@@ -4,6 +4,32 @@ const config = require("./config");
 
 const app = express();
 const port = config.port;
+const simulatedTransferFailures = new Map([
+  [
+    1010,
+    {
+      status: 400,
+      code: "AMOUNT_NOT_ALLOWED",
+      message: "Amount not allowed",
+    },
+  ],
+  [
+    1020,
+    {
+      status: 409,
+      code: "INSUFFICIENT_BALANCE",
+      message: "Insufficient balance",
+    },
+  ],
+  [
+    1030,
+    {
+      status: 429,
+      code: "TRANSACTION_LIMIT_REACHED",
+      message: "Transaction limit reached",
+    },
+  ],
+]);
 
 // Apply one configurable delay centrally to every API response.
 app.use((_request, response, next) => {
@@ -128,25 +154,42 @@ app.post("/api/transfers", (request, response) => {
   const { recipientId, amount, note } = request.body || {};
   const idempotencyKey = request.get("Idempotency-Key");
 
+  if (typeof amount === "number" && Number.isFinite(amount)) {
+    const simulatedFailure = simulatedTransferFailures.get(Math.round(amount * 100));
+
+    if (simulatedFailure) {
+      return response.status(simulatedFailure.status).json({
+        error: {
+          code: simulatedFailure.code,
+          message: simulatedFailure.message,
+        },
+      });
+    }
+  }
+
   if (typeof recipientId !== "string" || !recipientId.trim()) {
     return response
       .status(400)
       .json({ error: { code: "INVALID_RECIPIENT", message: "A recipientId is required." } });
   }
-  if (
-    typeof amount !== "number" ||
-    !Number.isFinite(amount) ||
-    amount <= 0 ||
-    Math.round(amount * 100) !== amount * 100
-  ) {
-    return response
-      .status(400)
-      .json({
-        error: {
-          code: "INVALID_AMOUNT",
-          message: "Amount must be a positive number with at most two decimal places.",
-        },
-      });
+  if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
+    return response.status(400).json({
+      error: {
+        code: "INVALID_AMOUNT",
+        message: "Amount must be a positive number with at most two decimal places.",
+      },
+    });
+  }
+
+  const amountInCents = Math.round(amount * 100);
+  const roundingDifference = Math.abs(amount * 100 - amountInCents);
+  if (roundingDifference > 1e-7) {
+    return response.status(400).json({
+      error: {
+        code: "INVALID_AMOUNT",
+        message: "Amount must be a positive number with at most two decimal places.",
+      },
+    });
   }
 
   const state = readState();
@@ -160,15 +203,14 @@ app.post("/api/transfers", (request, response) => {
       .status(404)
       .json({ error: { code: "RECIPIENT_NOT_FOUND", message: "Recipient not found." } });
   }
+
   if (amount > state.wallet.balance) {
-    return response
-      .status(409)
-      .json({
-        error: {
-          code: "INSUFFICIENT_BALANCE",
-          message: "The wallet balance is too low for this transfer.",
-        },
-      });
+    return response.status(409).json({
+      error: {
+        code: "INSUFFICIENT_BALANCE",
+        message: "The wallet balance is too low for this transfer.",
+      },
+    });
   }
 
   const transaction = createTransfer(state, {

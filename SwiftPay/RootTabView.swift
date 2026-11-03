@@ -3,16 +3,16 @@ import SwiftUI
 struct RootTabView: View {
 
     let walletRepository: WalletRepository
-    let transactionRepository: TransactionRepository
+    let historyViewModel: HistoryViewModel
     let onSendMoney: () -> Void
 
     init(
         walletRepository: WalletRepository,
-        transactionRepository: TransactionRepository,
+        historyViewModel: HistoryViewModel,
         onSendMoney: @escaping () -> Void
     ) {
         self.walletRepository = walletRepository
-        self.transactionRepository = transactionRepository
+        self.historyViewModel = historyViewModel
         self.onSendMoney = onSendMoney
     }
 
@@ -25,7 +25,7 @@ struct RootTabView: View {
                 Label("Home", systemImage: "house")
             }
 
-            HistoryView(transactionRepository: transactionRepository)
+            HistoryView(viewModel: historyViewModel)
                 .tabItem {
                     Label("History", systemImage: "clock.arrow.circlepath")
                 }

@@ -4,10 +4,7 @@ import Foundation
 enum TransferStep {
     case details
     case review
-    case pin
-    case processing
     case success
-    case failure
 }
 
 @MainActor
@@ -21,10 +18,25 @@ final class TransferViewModel: ObservableObject {
     @Published private(set) var recipientLookupError: String?
     private var recipientLookupRequestID = UUID()
 
-    private let recipientRepository: RecipientRepository
+    // TRANSFER STATES
+    @Published private(set) var isSubmittingTransfer = false
+    @Published private(set) var pinEntryError: String?
+    @Published private(set) var transferError: String?
+    @Published private(set) var completedTransfer: TransferResponse?
+    private let transferIdempotencyKey = UUID().uuidString
 
-    init(recipientRepository: RecipientRepository) {
+    private let recipientRepository: RecipientRepository
+    private let transferRepository: TransferRepository
+    private let historyViewModel: HistoryViewModel
+
+    init(
+        recipientRepository: RecipientRepository,
+        transferRepository: TransferRepository,
+        historyViewModel: HistoryViewModel
+    ) {
         self.recipientRepository = recipientRepository
+        self.transferRepository = transferRepository
+        self.historyViewModel = historyViewModel
     }
 
     var isPhoneNumberComplete: Bool {
@@ -56,7 +68,7 @@ final class TransferViewModel: ObservableObject {
             guard recipientLookupRequestID == requestID else { return }
 
             if let apiError = error as? APIClientError,
-                case .httpStatus(404) = apiError
+                case .httpStatus(404, _) = apiError
             {
                 recipientLookupError = "No Recipient found"
             } else {
@@ -102,7 +114,71 @@ final class TransferViewModel: ObservableObject {
         currentStep = .review
     }
 
-    func continueToPIN() {
-        currentStep = .pin
+    func submitPIN(_ pin: String) -> Bool {
+        pinEntryError = nil
+        transferError = nil
+
+        guard pin == "1234" else {
+            pinEntryError = "Incorrect PIN. Try again."
+            return false
+        }
+
+        guard
+            !isSubmittingTransfer,
+            let recipient,
+            let amount = Decimal(string: amount),
+            amount > 0
+        else {
+            return false
+        }
+
+        isSubmittingTransfer = true
+
+        Task {
+            await performTransfer(
+                recipientId: recipient.id,
+                amount: amount
+            )
+        }
+
+        return true
+    }
+
+    private func performTransfer(
+        recipientId: String,
+        amount: Decimal
+    ) async {
+        defer { isSubmittingTransfer = false }
+
+        do {
+            let response = try await transferRepository.createTransfer(
+                recipientId: recipientId,
+                amount: amount,
+                idempotencyKey: transferIdempotencyKey
+            )
+
+            completedTransfer = response
+            historyViewModel.insertNewTransaction(response.transaction)
+            currentStep = .success
+        } catch {
+            if let apiError = error as? APIClientError,
+                case .httpStatus(let statusCode, let message) = apiError
+            {
+                transferError =
+                    message
+                    ?? (statusCode == 409
+                        ? "Your wallet balance is too low for this transfer."
+                        : "The transfer couldn’t be completed. Please try again.")
+            } else {
+                transferError =
+                    "The transfer couldn’t be completed. Please try again."
+            }
+        }
+    }
+
+    func editTransferDetails() {
+        guard !isSubmittingTransfer else { return }
+        transferError = nil
+        currentStep = .details
     }
 }

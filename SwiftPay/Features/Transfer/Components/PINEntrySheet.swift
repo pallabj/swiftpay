@@ -2,10 +2,11 @@ import SwiftUI
 
 struct PINEntrySheet: View {
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: TransferViewModel
     @FocusState private var isPINFieldFocused: Bool
     @State private var pin = ""
 
-    let onSubmit: (String) -> Void
+    let onSubmit: (String) -> Bool
 
     var body: some View {
         VStack(spacing: 24) {
@@ -65,22 +66,28 @@ struct PINEntrySheet: View {
                 isPINFieldFocused = true
             }
 
+            if let errorMessage = viewModel.pinEntryError {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
             Button {
-                onSubmit(pin)
+                if onSubmit(pin) {
+                    dismiss()
+                } else {
+                    pin = ""
+                }
             } label: {
                 Text("Confirm PIN")
                     .font(.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
-                    .background(
-                        .blue,
-                        in: RoundedRectangle(cornerRadius: 14)
-                    )
+                    .background(.blue, in: RoundedRectangle(cornerRadius: 14))
             }
             .buttonStyle(.plain)
             .disabled(pin.count != 4)
-            .opacity(pin.count == 4 ? 1 : 0.5)
 
             Spacer(minLength: 0)
         }

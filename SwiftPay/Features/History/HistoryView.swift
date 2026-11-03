@@ -1,16 +1,7 @@
 import SwiftUI
 
 struct HistoryView: View {
-
-    @StateObject private var viewModel: HistoryViewModel
-
-    init(transactionRepository: TransactionRepository) {
-        _viewModel = StateObject(
-            wrappedValue: HistoryViewModel(
-                transactionRepository: transactionRepository
-            )
-        )
-    }
+    @ObservedObject var viewModel: HistoryViewModel
 
     var body: some View {
         NavigationStack {
@@ -25,13 +16,15 @@ struct HistoryView: View {
                     }
                 }
 
-                if viewModel.isLoading {
+                if viewModel.isLoadingNextPage {
                     HStack(alignment: .center, spacing: 16) {
                         ProgressView().progressViewStyle(.circular)
                     }.listRowSeparator(.hidden)
                 }
             }
-            .refreshable(action: viewModel.fetchNextPage)
+            .refreshable {
+                await viewModel.refreshTransactions()
+            }
             .navigationTitle("Transactions")
         }
         .task(viewModel.fetchNextPage)

@@ -5,10 +5,18 @@ struct TransferView: View {
 
     @State private var isShowingPINModal = false
 
-    init(recipientRepository: RecipientRepository) {
+    @Environment(\.dismiss) private var dismiss
+
+    init(
+        recipientRepository: RecipientRepository,
+        transferRepository: TransferRepository,
+        historyViewModel: HistoryViewModel
+    ) {
         _viewModel = StateObject(
             wrappedValue: TransferViewModel(
-                recipientRepository: recipientRepository
+                recipientRepository: recipientRepository,
+                transferRepository: transferRepository,
+                historyViewModel: historyViewModel
             )
         )
     }
@@ -25,23 +33,25 @@ struct TransferView: View {
                         TransferReviewView(
                             recipient: recipient,
                             amount: viewModel.amount,
+                            isSubmitting: viewModel.isSubmittingTransfer,
+                            errorMessage: viewModel.transferError,
                             onConfirm: {
                                 isShowingPINModal = true
-                            }
+                            },
+                            onEditDetails: {
+                                viewModel.editTransferDetails()
+                            },
                         )
                     }
 
-                case .pin:
-                    Text("Enter PIN")
-
-                case .processing:
-                    Text("Processing transfer")
-
                 case .success:
-                    Text("Transfer successful")
-
-                case .failure:
-                    Text("Transfer failed")
+                    if let transaction = viewModel.completedTransfer?
+                        .transaction
+                    {
+                        TransferSuccessView(transaction: transaction) {
+                            dismiss()
+                        }
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -50,8 +60,8 @@ struct TransferView: View {
         .navigationTitle("Send Money")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isShowingPINModal) {
-            PINEntrySheet { _ in
-                isShowingPINModal = false
+            PINEntrySheet(viewModel: viewModel) { pin in
+                viewModel.submitPIN(pin)
             }
             .presentationDetents([.height(340)])
             .presentationDragIndicator(.visible)

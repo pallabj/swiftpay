@@ -5,7 +5,8 @@ import Foundation
 final class HistoryViewModel: ObservableObject {
     @Published private(set) var transactions: [Transaction] = []
     @Published private(set) var pagination: TransactionPagination?
-    @Published private(set) var isLoading = false
+    @Published private(set) var isLoadingNextPage = false
+    @Published private(set) var isRefreshing = false
     @Published private(set) var errorMessage: String?
 
     private let transactionRepository: TransactionRepository
@@ -14,23 +15,70 @@ final class HistoryViewModel: ObservableObject {
         self.transactionRepository = transactionRepository
     }
 
-    func fetchNextPage() async {
-        guard !isLoading, pagination?.hasMore != false else { return }
-        let offset = pagination?.nextOffset ?? 0
+    func refreshTransactions() async {
+        guard !isRefreshing, !isLoadingNextPage else { return }
 
-        isLoading = true
+        isRefreshing = true
         errorMessage = nil
-        defer { isLoading = false }
+        defer { isRefreshing = false }
+
         do {
-            let response =
-                try await transactionRepository.fetchTransactions(
-                    offset: offset,
-                    limit: 10
-                )
-            transactions.append(contentsOf: response.transactions)
+            let response = try await transactionRepository.fetchTransactions(
+                offset: 0,
+                limit: 10
+            )
+            transactions = response.transactions
             pagination = response.pagination
         } catch {
             errorMessage = "Failed loading transactions, please try again!"
         }
+    }
+
+    func fetchNextPage() async {
+        guard
+            !isLoadingNextPage,
+            !isRefreshing,
+            pagination?.hasMore != false
+        else {
+            return
+        }
+
+        isLoadingNextPage = true
+        errorMessage = nil
+        defer { isLoadingNextPage = false }
+        do {
+            let response =
+                try await transactionRepository.fetchTransactions(
+                    offset: pagination?.nextOffset ?? 0,
+                    limit: 10
+                )
+            let existingIDs = Set(transactions.map(\.id))
+            transactions.append(
+                contentsOf: response.transactions.filter {
+                    !existingIDs.contains($0.id)
+                }
+            )
+            pagination = response.pagination
+        } catch {
+            errorMessage = "Failed loading transactions, please try again!"
+        }
+    }
+
+    func insertNewTransaction(_ transaction: Transaction) {
+        guard !transactions.contains(where: { $0.id == transaction.id }) else {
+            return
+        }
+
+        transactions.insert(transaction, at: 0)
+
+        guard let pagination else { return }
+
+        self.pagination = TransactionPagination(
+            limit: pagination.limit,
+            offset: pagination.offset,
+            total: pagination.total + 1,
+            hasMore: pagination.hasMore,
+            nextOffset: pagination.hasMore ? transactions.count : nil
+        )
     }
 }

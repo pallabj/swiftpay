@@ -3,8 +3,17 @@ import Foundation
 enum APIClientError: Error {
     case invalidURL
     case invalidResponse
-    case httpStatus(Int)
+    case httpStatus(Int, message: String?)
     case decoding(Error)
+    case encoding(Error)
+}
+
+private struct APIErrorResponse: Decodable {
+    let error: APIErrorBody
+}
+
+private struct APIErrorBody: Decodable {
+    let message: String
 }
 
 final class APIClient {
@@ -51,7 +60,76 @@ final class APIClient {
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {
-            throw APIClientError.httpStatus(httpResponse.statusCode)
+            let errorResponse = try? JSONDecoder().decode(
+                APIErrorResponse.self,
+                from: data
+            )
+
+            throw APIClientError.httpStatus(
+                httpResponse.statusCode,
+                message: errorResponse?.error.message
+            )
+        }
+
+        do {
+            return try Self.makeDecoder().decode(responseType, from: data)
+        } catch {
+            throw APIClientError.decoding(error)
+        }
+    }
+
+    func post<Body: Encodable, Response: Decodable>(
+        _ endpoint: String,
+        body: Body,
+        idempotencyKey: String,
+        as responseType: Response.Type
+    ) async throws -> Response {
+        guard
+            var components = URLComponents(
+                url: baseUrl,
+                resolvingAgainstBaseURL: false
+            )
+        else {
+            throw APIClientError.invalidURL
+        }
+
+        components.path =
+            "/"
+            + endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+
+        guard let url = components.url else {
+            throw APIClientError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key")
+        request.timeoutInterval = 15
+
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            throw APIClientError.encoding(error)
+        }
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIClientError.invalidResponse
+        }
+
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            let errorResponse = try? JSONDecoder().decode(
+                APIErrorResponse.self,
+                from: data
+            )
+
+            throw APIClientError.httpStatus(
+                httpResponse.statusCode,
+                message: errorResponse?.error.message
+            )
         }
 
         do {

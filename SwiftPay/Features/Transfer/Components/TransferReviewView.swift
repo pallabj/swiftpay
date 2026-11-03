@@ -3,7 +3,11 @@ import SwiftUI
 struct TransferReviewView: View {
     let recipient: Recipient
     let amount: String
+    let isSubmitting: Bool
+    let errorMessage: String?
+
     let onConfirm: () -> Void
+    let onEditDetails: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -52,11 +56,30 @@ struct TransferReviewView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+            
+            Button(action: onEditDetails) {
+                Label("Edit", systemImage: "pencil")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .disabled(isSubmitting)
+
             Button(action: onConfirm) {
-                HStack {
-                    Text("Continue to PIN")
-                    Spacer()
-                    Image(systemName: "arrow.right")
+                Group {
+                    if isSubmitting {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        HStack {
+                            Text("Pay")
+                            Spacer()
+                            Image(systemName: "arrow.right")
+                        }
+                    }
                 }
                 .font(.headline)
                 .foregroundStyle(.white)
@@ -66,6 +89,7 @@ struct TransferReviewView: View {
                 .background(.blue, in: RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
+            .disabled(isSubmitting)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
