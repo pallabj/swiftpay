@@ -18,11 +18,11 @@ The API listens on `http://localhost:8000` by default. On first request, the bac
 
 The backend reads these environment variables at startup:
 
-| Variable | Default | Description |
-| --- | ---: | --- |
-| `PORT` | `8000` | Port used by the API server |
-| `SEED_TRANSACTION_COUNT` | `100` | Minimum number of demo seed transactions to keep in the JSON store; valid range is 2–10000 |
-| `API_RESPONSE_DELAY_MS` | `1000` | Central delay before each response in milliseconds; set to `0` to disable |
+| Variable                 | Default | Description                                                                                |
+| ------------------------ | ------: | ------------------------------------------------------------------------------------------ |
+| `PORT`                   |  `8000` | Port used by the API server                                                                |
+| `SEED_TRANSACTION_COUNT` |   `100` | Minimum number of demo seed transactions to keep in the JSON store; valid range is 2–10000 |
+| `API_RESPONSE_DELAY_MS`  |  `1000` | Central delay before each response in milliseconds; set to `0` to disable                  |
 
 For example, start the dev server with 200 seed transactions and no artificial delay:
 
@@ -85,14 +85,14 @@ An invalid phone number returns HTTP `400`. A valid number with no match returns
 
 ## Supporting endpoints
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/api/health` | Check whether the API is running |
-| `GET` | `/user` | Read the in-memory demo user's profile |
-| `GET` | `/api/recipients` | List demo recipients |
-| `GET` | `/recipients/lookup?phone=...` | Look up a demo recipient by Indian mobile number |
-| `GET` | `/transactions/:transactionId` | Read transaction details and receipt data |
-| `POST` | `/api/transfers` | Validate and simulate a wallet transfer |
+| Method | Path                           | Purpose                                          |
+| ------ | ------------------------------ | ------------------------------------------------ |
+| `GET`  | `/api/health`                  | Check whether the API is running                 |
+| `GET`  | `/user`                        | Read the in-memory demo user's profile           |
+| `GET`  | `/api/recipients`              | List demo recipients                             |
+| `GET`  | `/recipients/lookup?phone=...` | Look up a demo recipient by Indian mobile number |
+| `GET`  | `/transactions/:transactionId` | Read transaction details and receipt data        |
+| `POST` | `/api/transfers`               | Validate and simulate a wallet transfer          |
 
 The earlier `/api/wallet` and `/api/transactions` paths remain aliases for the Home screen GET routes.
 
