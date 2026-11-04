@@ -17,7 +17,7 @@ final class HomeViewModel: ObservableObject {
         guard !isLoading else { return }
         isLoading = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
         do {
             wallet = try await walletRepository.fetchWallet()

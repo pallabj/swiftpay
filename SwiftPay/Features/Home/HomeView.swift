@@ -25,7 +25,9 @@ struct HomeView: View {
                         currency: wallet.currency,
                         onSendMoney: onSendMoney
                     ).padding()
-                }.refreshable(action: viewModel.loadWallet)
+                }.refreshable {
+                    await viewModel.loadWallet()
+                }
             } else if let errorMessage = viewModel.errorMessage {
                 VStack(spacing: 16) {
                     ContentUnavailableView(
@@ -44,7 +46,6 @@ struct HomeView: View {
                 ProgressView("Loading Wallet")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-
         }
         .task {
             await viewModel.loadWallet()

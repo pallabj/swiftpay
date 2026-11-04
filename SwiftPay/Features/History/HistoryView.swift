@@ -22,6 +22,7 @@ struct HistoryView: View {
             }
         }
         .refreshable {
+            print("Trigger transactions list refresh")
             await viewModel.refreshTransactions()
         }
         .navigationTitle("Transactions")

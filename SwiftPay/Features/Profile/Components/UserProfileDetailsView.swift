@@ -1,7 +1,7 @@
 import SwiftUI
 
 func UserProfileDetailsView(_ user: User) -> some View {
-    List {
+    Group {
         Section {
             VStack(spacing: 12) {
                 AsyncImage(url: user.imageUrl.flatMap { URL(string: $0) }) {
@@ -36,5 +36,4 @@ func UserProfileDetailsView(_ user: User) -> some View {
             LabeledContent("Email", value: user.email)
         }
     }
-    .listStyle(.insetGrouped)
 }
