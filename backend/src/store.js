@@ -7,7 +7,9 @@ const config = require("./config");
 const demoUser = Object.freeze({
   id: "demo-user",
   name: "Alex Morgan",
+  phone: "+919876543210",
   email: "alex@example.test",
+  imageUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D",
   currency: "USD",
 });
 

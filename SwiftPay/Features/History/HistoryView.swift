@@ -4,29 +4,27 @@ struct HistoryView: View {
     @ObservedObject var viewModel: HistoryViewModel
 
     var body: some View {
-        NavigationStack {
-            List {
-                ForEach(viewModel.transactions) { txn in
-                    TransactionRow(
-                        transaction: txn
-                    ).onAppear {
-                        if txn.id == viewModel.transactions.last?.id {
-                            Task { await viewModel.fetchNextPage() }
-                        }
+        List {
+            ForEach(viewModel.transactions) { txn in
+                TransactionRow(
+                    transaction: txn
+                ).onAppear {
+                    if txn.id == viewModel.transactions.last?.id {
+                        Task { await viewModel.fetchNextPage() }
                     }
                 }
+            }
 
-                if viewModel.isLoadingNextPage {
-                    HStack(alignment: .center, spacing: 16) {
-                        ProgressView().progressViewStyle(.circular)
-                    }.listRowSeparator(.hidden)
-                }
+            if viewModel.isLoadingNextPage {
+                HStack(alignment: .center, spacing: 16) {
+                    ProgressView().progressViewStyle(.circular)
+                }.listRowSeparator(.hidden)
             }
-            .refreshable {
-                await viewModel.refreshTransactions()
-            }
-            .navigationTitle("Transactions")
         }
+        .refreshable {
+            await viewModel.refreshTransactions()
+        }
+        .navigationTitle("Transactions")
         .task(viewModel.fetchNextPage)
     }
 }

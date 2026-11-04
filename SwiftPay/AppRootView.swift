@@ -20,6 +20,7 @@ struct AppRootView: View {
             RootTabView(
                 walletRepository: dependencies.walletRepository,
                 historyViewModel: historyViewModel,
+                userRepository: dependencies.userRepository,
                 onSendMoney: {
                     isShowingTransfer = true
                 }

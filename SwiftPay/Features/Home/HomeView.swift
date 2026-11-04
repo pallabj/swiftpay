@@ -2,8 +2,6 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
-    
-    
 
     init(walletRepository: WalletRepository, onSendMoney: @escaping () -> Void)
     {

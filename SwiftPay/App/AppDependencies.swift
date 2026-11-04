@@ -5,6 +5,7 @@ struct AppDependencies {
     let transactionRepository: TransactionRepository
     let recipientRepository: RecipientRepository
     let transferRepository: TransferRepository
+    let userRepository: UserRepository
 
     init() {
         guard let baseURL = URL(string: "http://localhost:8000") else {
@@ -20,5 +21,6 @@ struct AppDependencies {
         transactionRepository = TransactionRepository(apiClient: apiClient)
         recipientRepository = RecipientRepository(apiClient: apiClient)
         transferRepository = TransferRepository(apiClient: apiClient)
+        userRepository = UserRepository(apiClient: apiClient)
     }
 }
