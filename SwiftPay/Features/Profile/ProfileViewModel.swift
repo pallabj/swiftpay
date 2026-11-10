@@ -4,7 +4,6 @@ import Observation
 @MainActor
 @Observable
 final class ProfileViewModel {
-
     private(set) var user: User?
     private(set) var isLoading = false
     private(set) var errorMessage: String?
@@ -24,9 +23,10 @@ final class ProfileViewModel {
 
         do {
             user = try await userRepository.getUser()
+        } catch is CancellationError {
+            return
         } catch {
-            errorMessage = "Could not load your profile. Please try again."
+            errorMessage = error.userMessage
         }
     }
-
 }

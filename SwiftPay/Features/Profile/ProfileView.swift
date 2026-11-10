@@ -10,44 +10,58 @@ struct ProfileView: View {
     }
 
     var body: some View {
-        List {
-            Group {
-                if viewModel.isLoading && viewModel.user == nil {
-                    ProgressView("Loading profile…")
-                } else if let errorMessage = viewModel.errorMessage,
-                    viewModel.user == nil
-                {
-                    ContentUnavailableView {
-                        Label(
-                            "Profile unavailable",
-                            systemImage:
-                                "person.crop.circle.badge.exclamationmark"
-                        )
-                    } description: {
-                        Text(errorMessage)
-                    } actions: {
-                        Button("Try Again") {
-                            Task {
-                                await viewModel.loadUser()
+        Group {
+            if let user = viewModel.user {
+                List {
+                    UserProfileDetailsView(user)
+                    if let errorMessage = viewModel.errorMessage {
+                        Section {
+                            Label(errorMessage, systemImage: "wifi.slash")
+                                .foregroundStyle(.secondary)
+                            Button("Retry") {
+                                Task {
+                                    await viewModel.loadUser()
+                                }
                             }
                         }
                     }
-                } else if let user = viewModel.user {
-                    UserProfileDetailsView(user)
-                        .refreshable {
-                            await viewModel.loadUser()
-                        }
-                } else {
-                    ProgressView("Loading profile…")
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .task {
-                await viewModel.loadUser()
+                .listStyle(.insetGrouped)
+                .refreshable {
+                    await viewModel.loadUser()
+                }
+            } else if viewModel.isLoading {
+                LoadStateView(
+                    state: .loading("Loading profile…"),
+                    onRetry: {
+                        await viewModel.loadUser()
+                    }
+                )
+            } else if let errorMessage = viewModel.errorMessage {
+                LoadStateView(
+                    state: .unavailable(
+                        title: "Profile unavailable",
+                        systemImage: "wifi.slash",
+                        message: errorMessage
+                    ),
+                    onRetry: {
+                        await viewModel.loadUser()
+                    }
+                )
+            } else {
+                LoadStateView(
+                    state: .unavailable(
+                        title: "Profile not loaded",
+                        systemImage: "person",
+                        message: "Try loading your profile again."
+                    ),
+                    onRetry: {
+                        await viewModel.loadUser()
+                    }
+                )
             }
         }
-        .listStyle(.insetGrouped)
-        .refreshable {
+        .task {
             await viewModel.loadUser()
         }
     }

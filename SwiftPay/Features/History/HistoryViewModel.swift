@@ -30,8 +30,10 @@ final class HistoryViewModel: ObservableObject {
             )
             transactions = response.transactions
             pagination = response.pagination
+        } catch is CancellationError {
+            return
         } catch {
-            errorMessage = "Failed loading transactions, please try again!"
+            errorMessage = error.userMessage
         }
     }
 
@@ -61,8 +63,10 @@ final class HistoryViewModel: ObservableObject {
                 }
             )
             pagination = response.pagination
+        } catch is CancellationError {
+            return
         } catch {
-            errorMessage = "Failed loading transactions, please try again!"
+            errorMessage = error.userMessage
         }
     }
 

@@ -2,9 +2,9 @@
   "wallet": {
     "id": "demo-wallet",
     "userId": "demo-user",
-    "balance": 997,
+    "balance": 2000,
     "currency": "USD",
-    "updatedAt": "2026-11-10T06:16:45.276Z"
+    "updatedAt": "2026-11-10T09:06:07.944Z"
   },
   "recipients": [
     {
@@ -1219,6 +1219,17 @@
       "description": "Transfer to Taylor Kim",
       "status": "completed",
       "createdAt": "2026-11-10T06:16:45.276Z"
+    },
+    {
+      "id": "21e672be-f050-4919-b12d-65bd19411ae7",
+      "type": "debit",
+      "amount": 100,
+      "currency": "USD",
+      "recipientId": "recipient-1",
+      "recipientName": "Jordan Lee",
+      "description": "Transfer to Jordan Lee",
+      "status": "completed",
+      "createdAt": "2026-11-10T09:06:07.944Z"
     }
   ],
   "idempotency": {
@@ -1440,6 +1451,23 @@
       },
       "wallet": {
         "balance": 997,
+        "currency": "USD"
+      }
+    },
+    "8A05A870-389D-41FB-BB7D-5ACD0090C0D6": {
+      "transaction": {
+        "id": "21e672be-f050-4919-b12d-65bd19411ae7",
+        "type": "debit",
+        "amount": 100,
+        "currency": "USD",
+        "recipientId": "recipient-1",
+        "recipientName": "Jordan Lee",
+        "description": "Transfer to Jordan Lee",
+        "status": "completed",
+        "createdAt": "2026-11-10T09:06:07.944Z"
+      },
+      "wallet": {
+        "balance": 897,
         "currency": "USD"
       }
     }

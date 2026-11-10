@@ -23,12 +23,22 @@ The backend reads these environment variables at startup:
 | `PORT`                   |  `8000` | Port used by the API server                                                                |
 | `SEED_TRANSACTION_COUNT` |   `100` | Minimum number of demo seed transactions to keep in the JSON store; valid range is 2–10000 |
 | `API_RESPONSE_DELAY_MS`  |  `1000` | Central delay before each response in milliseconds; set to `0` to disable                  |
+| `FORCE_API_401`          |    `0` | Return HTTP 401 for every request when set to `1` (local UI error-state testing)             |
+| `FORCE_API_500`          |    `0` | Return HTTP 500 for every request when set to `1` (local UI error-state testing)             |
 
 For example, start the dev server with 200 seed transactions and no artificial delay:
 
 ```sh
 SEED_TRANSACTION_COUNT=200 API_RESPONSE_DELAY_MS=0 npm run dev
 ```
+
+To test the app's HTTP 500 screens, start the backend with:
+
+```sh
+FORCE_API_500=1 API_RESPONSE_DELAY_MS=0 npm start
+```
+
+To test HTTP 401 handling, use `FORCE_API_401=1` instead. Enable only one force-status flag at a time. Stop the backend and restart it without either flag to restore normal API behavior.
 
 The backend adds missing seed records to an existing `wallet.json` without duplicating them or removing existing transactions. Increasing `SEED_TRANSACTION_COUNT` adds more seed records after restart; lowering it does not delete records.
 

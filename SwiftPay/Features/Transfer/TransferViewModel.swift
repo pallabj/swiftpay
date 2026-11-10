@@ -29,7 +29,7 @@ final class TransferViewModel: ObservableObject {
     private let transferRepository: TransferRepository
     private let historyViewModel: HistoryViewModel
 
-    var onTransferSuccessful: (_ balance: Decimal) -> Void
+    private var onTransferSuccessful: (_ balance: Decimal) -> Void
 
     init(
         recipientRepository: RecipientRepository,
@@ -68,17 +68,13 @@ final class TransferViewModel: ObservableObject {
             )
             guard recipientLookupRequestID == requestID else { return }
             recipient = match
+        } catch is CancellationError {
+            guard recipientLookupRequestID == requestID else { return }
+            isLookingUpRecipient = false
+            return
         } catch {
             guard recipientLookupRequestID == requestID else { return }
-
-            if let apiError = error as? APIClientError,
-                case .httpStatus(404, _) = apiError
-            {
-                recipientLookupError = "No Recipient found"
-            } else {
-                recipientLookupError =
-                    "Couldn't verify this number. Please try again."
-            }
+            recipientLookupError = error.userMessage
         }
 
         guard recipientLookupRequestID == requestID else { return }
@@ -165,19 +161,10 @@ final class TransferViewModel: ObservableObject {
             historyViewModel.insertNewTransaction(response.transaction)
             onTransferSuccessful(response.wallet.balance)
             currentStep = .success
+        } catch is CancellationError {
+            return
         } catch {
-            if let apiError = error as? APIClientError,
-                case .httpStatus(let statusCode, let message) = apiError
-            {
-                transferError =
-                    message
-                    ?? (statusCode == 409
-                        ? "Your wallet balance is too low for this transfer."
-                        : "The transfer couldn’t be completed. Please try again.")
-            } else {
-                transferError =
-                    "The transfer couldn’t be completed. Please try again."
-            }
+            transferError = error.userMessage
         }
     }
 

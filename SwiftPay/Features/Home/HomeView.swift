@@ -12,10 +12,7 @@ struct HomeView: View {
 
     var body: some View {
         Group {
-            if viewModel.isLoading && viewModel.wallet == nil {
-                ProgressView("Loading Wallet")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let wallet = viewModel.wallet {
+            if let wallet = viewModel.wallet {
                 ScrollView {
                     BalanceCard(
                         balance: wallet.balance,
@@ -26,22 +23,25 @@ struct HomeView: View {
                     await viewModel.loadWallet()
                 }
             } else if let errorMessage = viewModel.errorMessage {
-                VStack(spacing: 16) {
-                    ContentUnavailableView(
-                        "Wallet details unavailable",
+                LoadStateView(
+                    state: .unavailable(
+                        title: "Wallet details unavailable",
                         systemImage: "wifi.slash",
-                        description: Text(errorMessage)
-                    )
-
-                    Button("Retry") {
-                        Task {
-                            await viewModel.loadWallet()
-                        }
+                        message: errorMessage
+                    ),
+                    onRetry: {
+                        await viewModel.loadWallet()
                     }
-                }
+                )
+                .frame(maxHeight: .infinity)
             } else {
-                ProgressView("Loading Wallet")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                LoadStateView(
+                    state: .loading("Loading wallet…"),
+                    onRetry: {
+                        await viewModel.loadWallet()
+                    }
+                )
+                .frame(maxHeight: .infinity)
             }
         }
         .task {

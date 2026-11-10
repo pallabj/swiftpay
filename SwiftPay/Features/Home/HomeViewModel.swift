@@ -21,8 +21,10 @@ final class HomeViewModel: ObservableObject {
         defer { isLoading = false }
         do {
             wallet = try await walletRepository.fetchWallet()
+        } catch is CancellationError {
+            return
         } catch {
-            errorMessage = "Could not load your wallet, please try again"
+            errorMessage = error.userMessage
         }
     }
 

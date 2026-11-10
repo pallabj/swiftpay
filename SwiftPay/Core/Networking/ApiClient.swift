@@ -1,11 +1,33 @@
 import Foundation
+import OSLog
 
 enum APIClientError: Error {
+    static let genericUserMessage = "Something went wrong"
+
     case invalidURL
     case invalidResponse
-    case httpStatus(Int, message: String?)
+    case httpStatus(Int, message: String)
+    case network(Error)
     case decoding(Error)
     case encoding(Error)
+
+    var userMessage: String {
+        switch self {
+        case let .httpStatus(_, message):
+            return message
+        case .invalidURL, .invalidResponse, .network(_), .decoding(_), .encoding:
+            return Self.genericUserMessage
+        }
+    }
+}
+
+extension Error {
+    var userMessage: String {
+        if let apiError = self as? APIClientError {
+            return apiError.userMessage
+        }
+        return APIClientError.genericUserMessage
+    }
 }
 
 private struct APIErrorResponse: Decodable {
@@ -19,6 +41,10 @@ private struct APIErrorBody: Decodable {
 final class APIClient {
     private let baseUrl: URL
     private let session: URLSession
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "SwiftPay",
+        category: "APIClient"
+    )
 
     init(baseUrl: URL, session: URLSession) {
         self.baseUrl = baseUrl
@@ -36,15 +62,17 @@ final class APIClient {
                 resolvingAgainstBaseURL: false
             )
         else {
+            logger.error("Could not create URL components for endpoint \(endpoint, privacy: .private)")
             throw APIClientError.invalidURL
         }
 
         components.path =
             "/"
-            + endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                + endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         components.queryItems = queryItems.isEmpty ? nil : queryItems
 
         guard let url = components.url else {
+            logger.error("Could not create a URL for endpoint \(endpoint, privacy: .private)")
             throw APIClientError.invalidURL
         }
 
@@ -53,28 +81,30 @@ final class APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.timeoutInterval = 15
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await perform(request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            log(APIClientError.invalidResponse, for: request)
             throw APIClientError.invalidResponse
         }
 
-        guard (200..<300).contains(httpResponse.statusCode) else {
-            let errorResponse = try? JSONDecoder().decode(
-                APIErrorResponse.self,
-                from: data
-            )
-
-            throw APIClientError.httpStatus(
+        guard (200 ..< 300).contains(httpResponse.statusCode) else {
+            let message = decodeBackendErrorMessage(from: data, for: request)
+                ?? APIClientError.genericUserMessage
+            let error = APIClientError.httpStatus(
                 httpResponse.statusCode,
-                message: errorResponse?.error.message
+                message: message
             )
+            log(error, for: request)
+            throw error
         }
 
         do {
             return try Self.makeDecoder().decode(responseType, from: data)
         } catch {
-            throw APIClientError.decoding(error)
+            let apiError = APIClientError.decoding(error)
+            log(apiError, for: request)
+            throw apiError
         }
     }
 
@@ -90,14 +120,16 @@ final class APIClient {
                 resolvingAgainstBaseURL: false
             )
         else {
+            logger.error("Could not create URL components for endpoint \(endpoint, privacy: .private)")
             throw APIClientError.invalidURL
         }
 
         components.path =
             "/"
-            + endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                + endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
 
         guard let url = components.url else {
+            logger.error("Could not create a URL for endpoint \(endpoint, privacy: .private)")
             throw APIClientError.invalidURL
         }
 
@@ -111,32 +143,78 @@ final class APIClient {
         do {
             request.httpBody = try JSONEncoder().encode(body)
         } catch {
-            throw APIClientError.encoding(error)
+            let apiError = APIClientError.encoding(error)
+            log(apiError, for: request)
+            throw apiError
         }
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await perform(request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            log(APIClientError.invalidResponse, for: request)
             throw APIClientError.invalidResponse
         }
 
-        guard (200..<300).contains(httpResponse.statusCode) else {
-            let errorResponse = try? JSONDecoder().decode(
-                APIErrorResponse.self,
-                from: data
-            )
-
-            throw APIClientError.httpStatus(
+        guard (200 ..< 300).contains(httpResponse.statusCode) else {
+            let message = decodeBackendErrorMessage(from: data, for: request)
+                ?? APIClientError.genericUserMessage
+            let error = APIClientError.httpStatus(
                 httpResponse.statusCode,
-                message: errorResponse?.error.message
+                message: message
             )
+            log(error, for: request)
+            throw error
         }
 
         do {
             return try Self.makeDecoder().decode(responseType, from: data)
         } catch {
-            throw APIClientError.decoding(error)
+            let apiError = APIClientError.decoding(error)
+            log(apiError, for: request)
+            throw apiError
         }
+    }
+
+    private func perform(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        do {
+            return try await session.data(for: request)
+        } catch let error as CancellationError {
+            throw error
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        } catch {
+            let apiError = APIClientError.network(error)
+            log(apiError, for: request)
+            throw apiError
+        }
+    }
+
+    private func decodeBackendErrorMessage(
+        from data: Data,
+        for request: URLRequest
+    ) -> String? {
+        do {
+            let response = try JSONDecoder().decode(APIErrorResponse.self, from: data)
+            let message = response.error.message.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+            return message.isEmpty ? nil : message
+        } catch {
+            log(error, for: request, context: "Could not decode backend error response")
+            return nil
+        }
+    }
+
+    private func log(
+        _ error: Error,
+        for request: URLRequest,
+        context: String = "Request failed"
+    ) {
+        let method = request.httpMethod ?? "UNKNOWN"
+        let path = request.url?.path ?? "<unknown path>"
+        logger.error(
+            "\(context, privacy: .public): \(method, privacy: .public) \(path, privacy: .private): \(String(reflecting: error), privacy: .private)"
+        )
     }
 
     private static func makeDecoder() -> JSONDecoder {

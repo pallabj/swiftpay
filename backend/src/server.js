@@ -39,6 +39,27 @@ app.use((_request, response, next) => {
   response.on("close", () => clearTimeout(timer));
 });
 
+// Enable one force-status flag to exercise the app's API error states.
+app.use((_request, response, next) => {
+  if (config.forceAPI401) {
+    return response.status(401).json({
+      error: {
+        code: "FORCED_UNAUTHORIZED",
+        message: "Forced HTTP 401 for local testing.",
+      },
+    });
+  }
+
+  if (!config.forceAPI500) return next();
+
+  return response.status(500).json({
+    error: {
+      code: "FORCED_INTERNAL_SERVER_ERROR",
+      message: "Forced HTTP 500 for local testing.",
+    },
+  });
+});
+
 app.use(express.json({ limit: "16kb" }));
 
 app.get("/api/health", (_request, response) => {
@@ -246,5 +267,7 @@ app.use((error, _request, response, _next) => {
 app.listen(port, () => {
   console.log(`SwiftPay API listening on http://localhost:${port}`);
   console.log(`API response delay: ${config.apiResponseDelayMs} ms`);
+  const forcedAPIStatus = config.forceAPI401 ? 401 : config.forceAPI500 ? 500 : "disabled";
+  console.log(`Forced API status: ${forcedAPIStatus}`);
   console.log(`Configured demo transaction count: ${config.seedTransactionCount}`);
 });
