@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HistoryView: View {
     @ObservedObject var viewModel: HistoryViewModel
+    @State private var selectedTransaction: Transaction?
 
     var body: some View {
         Group {
@@ -35,9 +36,13 @@ struct HistoryView: View {
             } else {
                 List {
                     ForEach(viewModel.transactions) { txn in
-                        TransactionRow(
-                            transaction: txn
-                        ).onAppear {
+                        Button {
+                            selectedTransaction = txn
+                        } label: {
+                            TransactionRow(transaction: txn)
+                        }
+                        .buttonStyle(.plain)
+                        .onAppear {
                             if txn.id == viewModel.transactions.last?.id {
                                 Task { await viewModel.fetchNextPage() }
                             }
@@ -74,6 +79,12 @@ struct HistoryView: View {
             }
         }
         .navigationTitle("Transactions")
+        .sheet(item: $selectedTransaction) { transaction in
+            TransactionDetailsSheet(transaction: transaction)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Color(uiColor: .systemBackground))
+        }
         .task {
             await viewModel.fetchNextPage()
         }
