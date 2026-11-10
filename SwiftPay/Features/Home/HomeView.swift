@@ -1,13 +1,10 @@
 import SwiftUI
 
 struct HomeView: View {
-    @StateObject private var viewModel: HomeViewModel
+    @ObservedObject var viewModel: HomeViewModel
 
-    init(walletRepository: WalletRepository, onSendMoney: @escaping () -> Void)
-    {
-        _viewModel = StateObject(
-            wrappedValue: HomeViewModel(walletRepository: walletRepository)
-        )
+    init(homeViewModel: HomeViewModel, onSendMoney: @escaping () -> Void) {
+        self.viewModel = homeViewModel
         self.onSendMoney = onSendMoney
     }
 

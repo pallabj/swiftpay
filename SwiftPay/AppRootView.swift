@@ -5,6 +5,7 @@ struct AppRootView: View {
     @State private var isShowingTransfer = false
 
     @StateObject private var historyViewModel: HistoryViewModel
+    @StateObject private var homeViewModel: HomeViewModel
 
     init(dependencies: AppDependencies) {
         self.dependencies = dependencies
@@ -13,12 +14,17 @@ struct AppRootView: View {
                 transactionRepository: dependencies.transactionRepository
             )
         )
+        _homeViewModel = StateObject(
+            wrappedValue: HomeViewModel(
+                walletRepository: dependencies.walletRepository
+            )
+        )
     }
 
     var body: some View {
         NavigationStack {
             RootTabView(
-                walletRepository: dependencies.walletRepository,
+                homeViewModel: homeViewModel,
                 historyViewModel: historyViewModel,
                 userRepository: dependencies.userRepository,
                 onSendMoney: {
@@ -29,7 +35,8 @@ struct AppRootView: View {
                 TransferView(
                     recipientRepository: dependencies.recipientRepository,
                     transferRepository: dependencies.transferRepository,
-                    historyViewModel: historyViewModel
+                    historyViewModel: historyViewModel,
+                    homeViewModel: homeViewModel
                 )
             }
         }

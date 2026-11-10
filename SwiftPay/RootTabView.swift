@@ -2,19 +2,20 @@ import SwiftUI
 
 struct RootTabView: View {
 
-    let walletRepository: WalletRepository
     let historyViewModel: HistoryViewModel
+    let homeViewModel: HomeViewModel
+
     let userRepository: UserRepository
     let onSendMoney: () -> Void
 
     init(
-        walletRepository: WalletRepository,
+        homeViewModel: HomeViewModel,
         historyViewModel: HistoryViewModel,
         userRepository: UserRepository,
         onSendMoney: @escaping () -> Void
     ) {
-        self.walletRepository = walletRepository
         self.historyViewModel = historyViewModel
+        self.homeViewModel = homeViewModel
         self.userRepository = userRepository
         self.onSendMoney = onSendMoney
     }
@@ -23,7 +24,7 @@ struct RootTabView: View {
         TabView {
             Tab("Home", systemImage: "house") {
                 HomeView(
-                    walletRepository: walletRepository,
+                    homeViewModel: homeViewModel,
                     onSendMoney: onSendMoney
                 )
             }

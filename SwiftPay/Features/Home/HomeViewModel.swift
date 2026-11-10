@@ -26,4 +26,9 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
+    func updateBalance(_ balance: Decimal) {
+        guard wallet != nil else { return }
+        wallet?.balance = balance
+        wallet?.updatedAt = Date()
+    }
 }

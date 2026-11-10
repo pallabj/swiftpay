@@ -10,13 +10,15 @@ struct TransferView: View {
     init(
         recipientRepository: RecipientRepository,
         transferRepository: TransferRepository,
-        historyViewModel: HistoryViewModel
+        historyViewModel: HistoryViewModel,
+        homeViewModel: HomeViewModel
     ) {
         _viewModel = StateObject(
             wrappedValue: TransferViewModel(
                 recipientRepository: recipientRepository,
                 transferRepository: transferRepository,
-                historyViewModel: historyViewModel
+                historyViewModel: historyViewModel,
+                homeViewModel: homeViewModel
             )
         )
     }

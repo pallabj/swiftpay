@@ -2,9 +2,9 @@
   "wallet": {
     "id": "demo-wallet",
     "userId": "demo-user",
-    "balance": 1049,
+    "balance": 999,
     "currency": "USD",
-    "updatedAt": "2026-11-04T10:25:16.738Z"
+    "updatedAt": "2026-11-10T05:33:34.611Z"
   },
   "recipients": [
     {
@@ -1186,6 +1186,28 @@
       "description": "Transfer to Jordan Lee",
       "status": "completed",
       "createdAt": "2026-11-04T10:25:16.738Z"
+    },
+    {
+      "id": "f4927efc-458e-43de-b5f7-582abd3c32df",
+      "type": "debit",
+      "amount": 49,
+      "currency": "USD",
+      "recipientId": "recipient-1",
+      "recipientName": "Jordan Lee",
+      "description": "Transfer to Jordan Lee",
+      "status": "completed",
+      "createdAt": "2026-11-04T11:59:03.445Z"
+    },
+    {
+      "id": "05f5d05e-cf7e-427e-ab2f-17ed102cf639",
+      "type": "debit",
+      "amount": 1,
+      "currency": "USD",
+      "recipientId": "recipient-1",
+      "recipientName": "Jordan Lee",
+      "description": "Transfer to Jordan Lee",
+      "status": "completed",
+      "createdAt": "2026-11-10T05:33:34.611Z"
     }
   ],
   "idempotency": {
@@ -1356,6 +1378,40 @@
       },
       "wallet": {
         "balance": 1049,
+        "currency": "USD"
+      }
+    },
+    "6B309987-B758-4D51-8695-00101DC31067": {
+      "transaction": {
+        "id": "f4927efc-458e-43de-b5f7-582abd3c32df",
+        "type": "debit",
+        "amount": 49,
+        "currency": "USD",
+        "recipientId": "recipient-1",
+        "recipientName": "Jordan Lee",
+        "description": "Transfer to Jordan Lee",
+        "status": "completed",
+        "createdAt": "2026-11-04T11:59:03.445Z"
+      },
+      "wallet": {
+        "balance": 1000,
+        "currency": "USD"
+      }
+    },
+    "723CC8D1-2A8E-4E30-8D0E-36B815BB5264": {
+      "transaction": {
+        "id": "05f5d05e-cf7e-427e-ab2f-17ed102cf639",
+        "type": "debit",
+        "amount": 1,
+        "currency": "USD",
+        "recipientId": "recipient-1",
+        "recipientName": "Jordan Lee",
+        "description": "Transfer to Jordan Lee",
+        "status": "completed",
+        "createdAt": "2026-11-10T05:33:34.611Z"
+      },
+      "wallet": {
+        "balance": 999,
         "currency": "USD"
       }
     }

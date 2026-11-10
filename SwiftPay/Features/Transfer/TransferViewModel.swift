@@ -28,15 +28,18 @@ final class TransferViewModel: ObservableObject {
     private let recipientRepository: RecipientRepository
     private let transferRepository: TransferRepository
     private let historyViewModel: HistoryViewModel
+    private let homeViewModel: HomeViewModel
 
     init(
         recipientRepository: RecipientRepository,
         transferRepository: TransferRepository,
-        historyViewModel: HistoryViewModel
+        historyViewModel: HistoryViewModel,
+        homeViewModel: HomeViewModel
     ) {
         self.recipientRepository = recipientRepository
         self.transferRepository = transferRepository
         self.historyViewModel = historyViewModel
+        self.homeViewModel = homeViewModel
     }
 
     var isPhoneNumberComplete: Bool {
@@ -159,6 +162,8 @@ final class TransferViewModel: ObservableObject {
 
             completedTransfer = response
             historyViewModel.insertNewTransaction(response.transaction)
+            homeViewModel.updateBalance(response.wallet.balance)
+
             currentStep = .success
         } catch {
             if let apiError = error as? APIClientError,
