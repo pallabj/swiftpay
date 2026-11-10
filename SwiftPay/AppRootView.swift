@@ -7,8 +7,9 @@ struct AppRootView: View {
     @StateObject private var historyViewModel: HistoryViewModel
     @StateObject private var homeViewModel: HomeViewModel
 
-    func onTransferSuccessful(_ balance: Decimal) {
+    func onTransferSuccessful(_ balance: Decimal, _ txn: Transaction) {
         homeViewModel.updateBalance(balance)
+        historyViewModel.insertNewTransaction(txn)
     }
 
     init(dependencies: AppDependencies) {
@@ -39,7 +40,6 @@ struct AppRootView: View {
                 TransferView(
                     recipientRepository: dependencies.recipientRepository,
                     transferRepository: dependencies.transferRepository,
-                    historyViewModel: historyViewModel,
                     availableBalance: homeViewModel.wallet?.balance ?? 0,
                     onTransferSuccessful: onTransferSuccessful,
                 )

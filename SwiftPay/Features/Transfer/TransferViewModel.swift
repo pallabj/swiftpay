@@ -27,22 +27,21 @@ final class TransferViewModel: ObservableObject {
 
     private let recipientRepository: RecipientRepository
     private let transferRepository: TransferRepository
-    private let historyViewModel: HistoryViewModel
 
     private var availableBalance: Decimal
 
-    private var onTransferSuccessful: (_ balance: Decimal) -> Void
+    private var onTransferSuccessful:
+        (_ balance: Decimal, _ txn: Transaction) -> Void
 
     init(
         recipientRepository: RecipientRepository,
         transferRepository: TransferRepository,
-        historyViewModel: HistoryViewModel,
         availableBalance: Decimal,
-        onTransferSuccessful: @escaping (_ balance: Decimal) -> Void
+        onTransferSuccessful:
+            @escaping (_ balance: Decimal, _ txn: Transaction) -> Void
     ) {
         self.recipientRepository = recipientRepository
         self.transferRepository = transferRepository
-        self.historyViewModel = historyViewModel
         self.onTransferSuccessful = onTransferSuccessful
         self.availableBalance = availableBalance
     }
@@ -187,8 +186,7 @@ final class TransferViewModel: ObservableObject {
             )
 
             completedTransfer = response
-            historyViewModel.insertNewTransaction(response.transaction)
-            onTransferSuccessful(response.wallet.balance)
+            onTransferSuccessful(response.wallet.balance, response.transaction)
             currentStep = .success
         } catch is CancellationError {
             return
