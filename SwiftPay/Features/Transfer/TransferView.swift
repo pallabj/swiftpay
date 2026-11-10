@@ -5,22 +5,28 @@ struct TransferView: View {
 
     @State private var isShowingPINModal = false
 
+    private var availableBalance: Decimal
+
     @Environment(\.dismiss) private var dismiss
 
     init(
         recipientRepository: RecipientRepository,
         transferRepository: TransferRepository,
         historyViewModel: HistoryViewModel,
-        onTransferSuccessful: @escaping (_ balance: Decimal) -> Void
+        availableBalance: Decimal,
+        onTransferSuccessful: @escaping (_ balance: Decimal) -> Void,
     ) {
         _viewModel = StateObject(
             wrappedValue: TransferViewModel(
                 recipientRepository: recipientRepository,
                 transferRepository: transferRepository,
                 historyViewModel: historyViewModel,
+                availableBalance: availableBalance,
                 onTransferSuccessful: onTransferSuccessful
+
             )
         )
+        self.availableBalance = availableBalance
     }
 
     var body: some View {

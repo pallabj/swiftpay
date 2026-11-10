@@ -40,7 +40,8 @@ struct AppRootView: View {
                     recipientRepository: dependencies.recipientRepository,
                     transferRepository: dependencies.transferRepository,
                     historyViewModel: historyViewModel,
-                    onTransferSuccessful: onTransferSuccessful
+                    availableBalance: homeViewModel.wallet?.balance ?? 0,
+                    onTransferSuccessful: onTransferSuccessful,
                 )
             }
         }

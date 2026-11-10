@@ -71,31 +71,40 @@ struct TransferDetailsFormView: View {
                             Color.gray.opacity(0.1),
                             in: RoundedRectangle(cornerRadius: 12)
                         )
+                        .submitLabel(.done)
 
                     Text("Verify the recipient to enter an amount.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+                if let message = viewModel.amountValidationMessage {
+                    Label(
+                        message,
+                        systemImage: "exclamationmark.circle.fill"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                }
             }
 
-            if viewModel.canProceed {
-                Button {
-                    viewModel.proceedToReview()
-                } label: {
-                    HStack {
-                        Text("Review transfer")
-                        Spacer()
-                        Image(systemName: "arrow.right")
-                    }
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(.blue, in: RoundedRectangle(cornerRadius: 16))
+            Button {
+                viewModel.proceedToReview()
+            } label: {
+                HStack {
+                    Text("Review transfer")
+                    Spacer()
+                    Image(systemName: "arrow.right")
                 }
-                .buttonStyle(.plain)
+                .font(.headline)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 20)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(.blue, in: RoundedRectangle(cornerRadius: 16))
             }
+            .buttonStyle(.plain)
+            .disabled(!viewModel.canProceed)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)

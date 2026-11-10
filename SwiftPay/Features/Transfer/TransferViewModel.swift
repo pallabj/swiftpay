@@ -29,18 +29,22 @@ final class TransferViewModel: ObservableObject {
     private let transferRepository: TransferRepository
     private let historyViewModel: HistoryViewModel
 
+    private var availableBalance: Decimal
+
     private var onTransferSuccessful: (_ balance: Decimal) -> Void
 
     init(
         recipientRepository: RecipientRepository,
         transferRepository: TransferRepository,
         historyViewModel: HistoryViewModel,
+        availableBalance: Decimal,
         onTransferSuccessful: @escaping (_ balance: Decimal) -> Void
     ) {
         self.recipientRepository = recipientRepository
         self.transferRepository = transferRepository
         self.historyViewModel = historyViewModel
         self.onTransferSuccessful = onTransferSuccessful
+        self.availableBalance = availableBalance
     }
 
     var isPhoneNumberComplete: Bool {
@@ -54,11 +58,34 @@ final class TransferViewModel: ObservableObject {
     var canProceed: Bool {
         guard
             recipient != nil,
+            isValidNumber(self.amount),
             let amount = Decimal(string: amount)
         else {
             return false
         }
-        return amount > 0
+
+        return amount > 0 && amount <= availableBalance
+    }
+
+    var amountValidationMessage: String? {
+        let input = amount.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !input.isEmpty else { return nil }
+
+        guard let enteredAmount = Decimal(string: input), isValidNumber(input)
+        else {
+            return "Enter a valid amount."
+        }
+
+        guard enteredAmount > 0 else {
+            return "Amount must be greater than zero."
+        }
+
+        guard enteredAmount <= availableBalance else {
+            return "Insufficient balance."
+        }
+
+        return nil
     }
 
     func lookupRecipient(phone: String, requestID: UUID) async {
@@ -126,8 +153,10 @@ final class TransferViewModel: ObservableObject {
         guard
             !isSubmittingTransfer,
             let recipient,
+            isValidNumber(self.amount),
             let amount = Decimal(string: amount),
-            amount > 0
+            amount > 0,
+            amount <= availableBalance
         else {
             return false
         }
