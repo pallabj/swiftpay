@@ -11,14 +11,14 @@ struct TransferView: View {
         recipientRepository: RecipientRepository,
         transferRepository: TransferRepository,
         historyViewModel: HistoryViewModel,
-        homeViewModel: HomeViewModel
+        onTransferSuccessful: @escaping (_ balance: Decimal) -> Void
     ) {
         _viewModel = StateObject(
             wrappedValue: TransferViewModel(
                 recipientRepository: recipientRepository,
                 transferRepository: transferRepository,
                 historyViewModel: historyViewModel,
-                homeViewModel: homeViewModel
+                onTransferSuccessful: onTransferSuccessful
             )
         )
     }

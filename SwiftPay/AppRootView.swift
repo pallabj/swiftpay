@@ -7,6 +7,10 @@ struct AppRootView: View {
     @StateObject private var historyViewModel: HistoryViewModel
     @StateObject private var homeViewModel: HomeViewModel
 
+    func onTransferSuccessful(_ balance: Decimal) {
+        homeViewModel.updateBalance(balance)
+    }
+
     init(dependencies: AppDependencies) {
         self.dependencies = dependencies
         _historyViewModel = StateObject(
@@ -36,7 +40,7 @@ struct AppRootView: View {
                     recipientRepository: dependencies.recipientRepository,
                     transferRepository: dependencies.transferRepository,
                     historyViewModel: historyViewModel,
-                    homeViewModel: homeViewModel
+                    onTransferSuccessful: onTransferSuccessful
                 )
             }
         }
