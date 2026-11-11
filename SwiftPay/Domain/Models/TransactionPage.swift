@@ -5,7 +5,7 @@ struct TransactionPage: Decodable {
     let pagination: TransactionPagination
 }
 
-struct TransactionPagination: Decodable {
+struct TransactionPagination: Decodable, Sendable {
     let limit: Int
     let hasMore: Bool
     let nextCursor: String?

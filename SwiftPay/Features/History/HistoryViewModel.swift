@@ -25,7 +25,7 @@ final class HistoryViewModel: ObservableObject {
         do {
             let cachedTransactions =
                 try await transactionRepository.fetchCachedTransactions()
-
+            pagination = try await transactionRepository.fetchCachedPagination()
             if !cachedTransactions.isEmpty {
                 transactions = cachedTransactions
             }
@@ -43,7 +43,9 @@ final class HistoryViewModel: ObservableObject {
             }
             errorMessage = nil
             transactions = response.transactions + olderCachedTransactions
-            pagination = response.pagination
+            if pagination == nil {
+                pagination = response.pagination
+            }
         } catch is CancellationError {
             return
         } catch {

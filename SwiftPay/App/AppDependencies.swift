@@ -24,7 +24,8 @@ struct AppDependencies {
 
         modelContainer = try ModelContainer(
             for: CachedWallet.self,
-            CachedTransaction.self
+            CachedTransaction.self,
+            CachedTransactionPagination.self
         )
         cachedWalletStore = CachedWalletStore(modelContainer: modelContainer)
         cachedTransactionStore = CachedTransactionStore(

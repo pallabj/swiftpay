@@ -9,7 +9,8 @@ struct TransactionRepository {
         self.cachedTransactionStore = cachedTransactionStore
     }
 
-    func fetchTransactions(after cursor: String? = nil, limit: Int = 10) async throws
+    func fetchTransactions(after cursor: String? = nil, limit: Int = 10)
+        async throws
         -> TransactionPage
     {
         var queryItems = [URLQueryItem(name: "limit", value: String(limit))]
@@ -23,15 +24,23 @@ struct TransactionRepository {
             as: TransactionPage.self
         )
 
-        try await cachedTransactionStore.saveTransactions(page.transactions)
+        try await cachedTransactionStore.savePage(
+            transactions: page.transactions,
+            pagination: page.pagination,
+            advanceCheckpoint: cursor != nil
+        )
         return page
     }
 
     func fetchCachedTransactions() async throws -> [Transaction] {
         try await cachedTransactionStore.fetchTransactions()
     }
-    
+
     func saveTransaction(_ transaction: Transaction) async throws {
         try await cachedTransactionStore.saveTransactions([transaction])
+    }
+
+    func fetchCachedPagination() async throws -> TransactionPagination? {
+        try await cachedTransactionStore.fetchPagination()
     }
 }
