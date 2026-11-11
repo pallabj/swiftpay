@@ -7,8 +7,8 @@ struct AppRootView: View {
     @StateObject private var historyViewModel: HistoryViewModel
     @StateObject private var homeViewModel: HomeViewModel
 
-    func onTransferSuccessful(_ balance: Decimal, _ txn: Transaction) {
-        homeViewModel.updateBalance(balance)
+    func onTransferSuccessful(_ balance: Decimal, _ txn: Transaction) async {
+        await homeViewModel.updateBalance(balance)
         historyViewModel.insertNewTransaction(txn)
     }
 

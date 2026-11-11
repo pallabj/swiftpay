@@ -18,9 +18,19 @@ final class HomeViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        do {
+            if let cachedWallet = try await walletRepository.fetchCachedWallet()
+            {
+                wallet = cachedWallet
+            }
+        } catch {
+            errorMessage = error.userMessage
+        }
+
         defer { isLoading = false }
         do {
             wallet = try await walletRepository.fetchWallet()
+            errorMessage = nil
         } catch is CancellationError {
             return
         } catch {
@@ -28,9 +38,17 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    func updateBalance(_ balance: Decimal) {
-        guard wallet != nil else { return }
-        wallet?.balance = balance
-        wallet?.updatedAt = Date()
+    func updateBalance(_ balance: Decimal) async {
+        guard var updatedWallet = wallet else { return }
+
+        updatedWallet.balance = balance
+        updatedWallet.updatedAt = Date()
+        wallet = updatedWallet
+
+        do {
+            try await walletRepository.saveCachedWallet(updatedWallet)
+        } catch {
+            errorMessage = error.userMessage
+        }
     }
 }

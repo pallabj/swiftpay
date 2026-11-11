@@ -1,6 +1,6 @@
 import Foundation
 
-struct Wallet: Codable, Identifiable {
+struct Wallet: Codable, Identifiable, Sendable {
     let id: String
     let userId: String
     var balance: Decimal

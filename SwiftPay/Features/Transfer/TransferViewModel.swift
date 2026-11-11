@@ -31,14 +31,14 @@ final class TransferViewModel: ObservableObject {
     private var availableBalance: Decimal
 
     private var onTransferSuccessful:
-        (_ balance: Decimal, _ txn: Transaction) -> Void
+        (_ balance: Decimal, _ txn: Transaction) async -> Void
 
     init(
         recipientRepository: RecipientRepository,
         transferRepository: TransferRepository,
         availableBalance: Decimal,
         onTransferSuccessful:
-            @escaping (_ balance: Decimal, _ txn: Transaction) -> Void
+            @escaping (_ balance: Decimal, _ txn: Transaction) async -> Void
     ) {
         self.recipientRepository = recipientRepository
         self.transferRepository = transferRepository
@@ -186,7 +186,10 @@ final class TransferViewModel: ObservableObject {
             )
 
             completedTransfer = response
-            onTransferSuccessful(response.wallet.balance, response.transaction)
+            await onTransferSuccessful(
+                response.wallet.balance,
+                response.transaction
+            )
             currentStep = .success
         } catch is CancellationError {
             return

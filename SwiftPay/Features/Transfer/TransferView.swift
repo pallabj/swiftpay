@@ -12,7 +12,8 @@ struct TransferView: View {
         transferRepository: TransferRepository,
         availableBalance: Decimal,
         onTransferSuccessful:
-            @escaping (_ balance: Decimal, _ txn: Transaction) -> Void,
+            @escaping (_ balance: Decimal, _ txn: Transaction) async ->
+            Void,
     ) {
         _viewModel = StateObject(
             wrappedValue: TransferViewModel(
