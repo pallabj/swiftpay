@@ -16,7 +16,6 @@ final class HistoryViewModel: ObservableObject {
     }
 
     func refreshTransactions() async {
-        print("refreshTransactions isLoadingNextPage: ", isLoadingNextPage)
         guard !isRefreshing, !isLoadingNextPage else { return }
 
         isRefreshing = true
@@ -38,7 +37,6 @@ final class HistoryViewModel: ObservableObject {
     }
 
     func fetchNextPage() async {
-        print("fetchNextPage isLoadingNextPage: ", isLoadingNextPage)
         guard
             !isLoadingNextPage,
             !isRefreshing,
