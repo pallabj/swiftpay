@@ -1,6 +1,6 @@
 import Foundation
 
-struct Transaction: Codable, Identifiable {
+struct Transaction: Codable, Identifiable, Sendable {
     let id: String
     let type: String
     let amount: Decimal

@@ -86,7 +86,7 @@ struct HistoryView: View {
                 .presentationBackground(Color(uiColor: .systemBackground))
         }
         .task {
-            await viewModel.fetchNextPage()
+            await viewModel.refreshTransactions()
         }
     }
 }

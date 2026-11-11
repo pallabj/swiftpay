@@ -4,6 +4,7 @@ import SwiftData
 struct AppDependencies {
     let modelContainer: ModelContainer
     let cachedWalletStore: CachedWalletStore
+    let cachedTransactionStore: CachedTransactionStore
 
     let walletRepository: WalletRepository
     let transactionRepository: TransactionRepository
@@ -21,14 +22,23 @@ struct AppDependencies {
             session: .shared
         )
 
-        modelContainer = try ModelContainer(for: CachedWallet.self)
+        modelContainer = try ModelContainer(
+            for: CachedWallet.self,
+            CachedTransaction.self
+        )
         cachedWalletStore = CachedWalletStore(modelContainer: modelContainer)
+        cachedTransactionStore = CachedTransactionStore(
+            modelContainer: modelContainer
+        )
 
         walletRepository = WalletRepository(
             apiClient: apiClient,
             cachedWalletStore: cachedWalletStore
         )
-        transactionRepository = TransactionRepository(apiClient: apiClient)
+        transactionRepository = TransactionRepository(
+            apiClient: apiClient,
+            cachedTransactionStore: cachedTransactionStore
+        )
         recipientRepository = RecipientRepository(apiClient: apiClient)
         transferRepository = TransferRepository(apiClient: apiClient)
         userRepository = UserRepository(apiClient: apiClient)

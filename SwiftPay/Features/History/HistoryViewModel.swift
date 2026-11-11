@@ -23,11 +23,26 @@ final class HistoryViewModel: ObservableObject {
         defer { isRefreshing = false }
 
         do {
+            let cachedTransactions =
+                try await transactionRepository.fetchCachedTransactions()
+
+            if !cachedTransactions.isEmpty {
+                transactions = cachedTransactions
+            }
+        } catch {
+            errorMessage = error.userMessage
+        }
+
+        do {
             let response = try await transactionRepository.fetchTransactions(
-                offset: 0,
                 limit: 10
             )
-            transactions = response.transactions
+            let refreshedIDs = Set(response.transactions.map(\.id))
+            let olderCachedTransactions = transactions.filter {
+                !refreshedIDs.contains($0.id)
+            }
+            errorMessage = nil
+            transactions = response.transactions + olderCachedTransactions
             pagination = response.pagination
         } catch is CancellationError {
             return
@@ -40,7 +55,9 @@ final class HistoryViewModel: ObservableObject {
         guard
             !isLoadingNextPage,
             !isRefreshing,
-            pagination?.hasMore != false
+            let currentPagination = pagination,
+            currentPagination.hasMore,
+            let cursor = currentPagination.nextCursor
         else {
             return
         }
@@ -51,8 +68,8 @@ final class HistoryViewModel: ObservableObject {
         do {
             let response =
                 try await transactionRepository.fetchTransactions(
-                    offset: pagination?.nextOffset ?? 0,
-                    limit: 10
+                    after: cursor,
+                    limit: currentPagination.limit
                 )
             let existingIDs = Set(transactions.map(\.id))
             transactions.append(
@@ -60,7 +77,7 @@ final class HistoryViewModel: ObservableObject {
                     !existingIDs.contains($0.id)
                 }
             )
-            pagination = response.pagination
+            self.pagination = response.pagination
         } catch is CancellationError {
             return
         } catch {
@@ -68,21 +85,17 @@ final class HistoryViewModel: ObservableObject {
         }
     }
 
-    func insertNewTransaction(_ transaction: Transaction) {
+    func insertNewTransaction(_ transaction: Transaction) async {
         guard !transactions.contains(where: { $0.id == transaction.id }) else {
             return
         }
 
         transactions.insert(transaction, at: 0)
 
-        guard let pagination else { return }
-
-        self.pagination = TransactionPagination(
-            limit: pagination.limit,
-            offset: pagination.offset,
-            total: pagination.total + 1,
-            hasMore: pagination.hasMore,
-            nextOffset: pagination.hasMore ? transactions.count : nil
-        )
+        do {
+            try await transactionRepository.saveTransaction(transaction)
+        } catch {
+            errorMessage = error.userMessage
+        }
     }
 }

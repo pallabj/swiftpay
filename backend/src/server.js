@@ -126,36 +126,86 @@ function parsePaginationValue(value, defaultValue, maximum = Number.MAX_SAFE_INT
   return Number.isSafeInteger(parsedValue) && parsedValue <= maximum ? parsedValue : null;
 }
 
+function encodeTransactionCursor(transaction) {
+  return Buffer.from(
+    JSON.stringify({ createdAt: transaction.createdAt, id: transaction.id }),
+  ).toString("base64url");
+}
+
+function decodeTransactionCursor(value) {
+  if (typeof value !== "string") return null;
+
+  try {
+    const cursor = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+    if (
+      typeof cursor.createdAt !== "string" ||
+      !Number.isFinite(Date.parse(cursor.createdAt)) ||
+      typeof cursor.id !== "string" ||
+      cursor.id.length === 0
+    ) {
+      return null;
+    }
+
+    return { createdAt: cursor.createdAt, id: cursor.id };
+  } catch {
+    return null;
+  }
+}
+
+function comesAfterTransactionCursor(transaction, cursor) {
+  const transactionTime = Date.parse(transaction.createdAt);
+  const cursorTime = Date.parse(cursor.createdAt);
+
+  return transactionTime < cursorTime || (
+    transactionTime === cursorTime && transaction.id < cursor.id
+  );
+}
+
+function compareTransactionsNewestFirst(first, second) {
+  const timeDifference = Date.parse(second.createdAt) - Date.parse(first.createdAt);
+  if (timeDifference !== 0) return timeDifference;
+  if (first.id === second.id) return 0;
+  return first.id > second.id ? -1 : 1;
+}
+
 app.get(["/transactions", "/api/transactions"], (request, response) => {
   const limit = parsePaginationValue(request.query.limit, 10, 50);
-  const offset = parsePaginationValue(request.query.offset, 0);
+  const cursorValue = request.query.after;
+  const cursor = cursorValue === undefined
+    ? null
+    : decodeTransactionCursor(cursorValue);
 
   if (limit === null || limit < 1) {
     return response.status(400).json({
       error: { code: "INVALID_LIMIT", message: "limit must be an integer from 1 to 50." },
     });
   }
-  if (offset === null) {
+  if (cursorValue !== undefined && cursor === null) {
     return response.status(400).json({
-      error: { code: "INVALID_OFFSET", message: "offset must be a non-negative integer." },
+      error: { code: "INVALID_CURSOR", message: "after must be a valid transaction cursor." },
     });
   }
 
   const state = readState();
   const transactions = [...state.transactions].sort(
-    (first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt),
+    compareTransactionsNewestFirst,
   );
-  const page = transactions.slice(offset, offset + limit);
-  const hasMore = offset + page.length < transactions.length;
+  const eligibleTransactions = cursor
+    ? transactions.filter((transaction) => comesAfterTransactionCursor(transaction, cursor))
+    : transactions;
+  const pageWithLookahead = eligibleTransactions.slice(0, limit + 1);
+  const hasMore = pageWithLookahead.length > limit;
+  const page = pageWithLookahead.slice(0, limit);
+  const nextCursor = hasMore
+    ? encodeTransactionCursor(page[page.length - 1])
+    : null;
 
   response.json({
     transactions: page,
     pagination: {
       limit,
-      offset,
-      total: transactions.length,
       hasMore,
-      nextOffset: hasMore ? offset + page.length : null,
+      nextCursor,
     },
   });
 });

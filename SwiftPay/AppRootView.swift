@@ -9,7 +9,7 @@ struct AppRootView: View {
 
     func onTransferSuccessful(_ balance: Decimal, _ txn: Transaction) async {
         await homeViewModel.updateBalance(balance)
-        historyViewModel.insertNewTransaction(txn)
+        await historyViewModel.insertNewTransaction(txn)
     }
 
     init(dependencies: AppDependencies) {
