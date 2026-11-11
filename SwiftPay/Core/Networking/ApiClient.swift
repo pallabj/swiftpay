@@ -56,56 +56,12 @@ final class APIClient {
         queryItems: [URLQueryItem] = [],
         as responseType: Response.Type
     ) async throws -> Response {
-        guard
-            var components = URLComponents(
-                url: baseUrl,
-                resolvingAgainstBaseURL: false
-            )
-        else {
-            logger.error("Could not create URL components for endpoint \(endpoint, privacy: .private)")
-            throw APIClientError.invalidURL
-        }
-
-        components.path =
-            "/"
-                + endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        components.queryItems = queryItems.isEmpty ? nil : queryItems
-
-        guard let url = components.url else {
-            logger.error("Could not create a URL for endpoint \(endpoint, privacy: .private)")
-            throw APIClientError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.timeoutInterval = 15
-
-        let (data, response) = try await perform(request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            log(APIClientError.invalidResponse, for: request)
-            throw APIClientError.invalidResponse
-        }
-
-        guard (200 ..< 300).contains(httpResponse.statusCode) else {
-            let message = decodeBackendErrorMessage(from: data, for: request)
-                ?? APIClientError.genericUserMessage
-            let error = APIClientError.httpStatus(
-                httpResponse.statusCode,
-                message: message
-            )
-            log(error, for: request)
-            throw error
-        }
-
-        do {
-            return try Self.makeDecoder().decode(responseType, from: data)
-        } catch {
-            let apiError = APIClientError.decoding(error)
-            log(apiError, for: request)
-            throw apiError
-        }
+        let request = try makeRequest(
+            endpoint: endpoint,
+            method: "GET",
+            queryItems: queryItems
+        )
+        return try await send(request, as: responseType)
     }
 
     func post<Body: Encodable, Response: Decodable>(
@@ -114,31 +70,9 @@ final class APIClient {
         idempotencyKey: String,
         as responseType: Response.Type
     ) async throws -> Response {
-        guard
-            var components = URLComponents(
-                url: baseUrl,
-                resolvingAgainstBaseURL: false
-            )
-        else {
-            logger.error("Could not create URL components for endpoint \(endpoint, privacy: .private)")
-            throw APIClientError.invalidURL
-        }
-
-        components.path =
-            "/"
-                + endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-
-        guard let url = components.url else {
-            logger.error("Could not create a URL for endpoint \(endpoint, privacy: .private)")
-            throw APIClientError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        var request = try makeRequest(endpoint: endpoint, method: "POST")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key")
-        request.timeoutInterval = 15
 
         do {
             request.httpBody = try JSONEncoder().encode(body)
@@ -148,6 +82,51 @@ final class APIClient {
             throw apiError
         }
 
+        return try await send(request, as: responseType)
+    }
+
+    private func makeRequest(
+        endpoint: String,
+        method: String,
+        queryItems: [URLQueryItem] = []
+    ) throws -> URLRequest {
+        guard var components = URLComponents(
+            url: baseUrl,
+            resolvingAgainstBaseURL: false
+        ) else {
+            logger.error("Could not create URL components for endpoint \(endpoint, privacy: .private)")
+            throw APIClientError.invalidURL
+        }
+
+        let basePath = components.path.trimmingCharacters(
+            in: CharacterSet(charactersIn: "/")
+        )
+        let endpointPath = endpoint.trimmingCharacters(
+            in: CharacterSet(charactersIn: "/")
+        )
+        let path = [basePath, endpointPath]
+            .filter { !$0.isEmpty }
+            .joined(separator: "/")
+
+        components.path = "/" + path
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
+
+        guard let url = components.url else {
+            logger.error("Could not create a URL for endpoint \(endpoint, privacy: .private)")
+            throw APIClientError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 15
+        return request
+    }
+
+    private func send<Response: Decodable>(
+        _ request: URLRequest,
+        as responseType: Response.Type
+    ) async throws -> Response {
         let (data, response) = try await perform(request)
 
         guard let httpResponse = response as? HTTPURLResponse else {

@@ -8,7 +8,7 @@ struct AppDependencies {
     let userRepository: UserRepository
 
     init() {
-        guard let baseURL = URL(string: "http://localhost:8000") else {
+        guard let baseURL = URL(string: "http://localhost:8000/api") else {
             fatalError("The API base URL is invalid.")
         }
 

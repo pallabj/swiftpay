@@ -19,7 +19,7 @@ struct TransferRepository {
         )
 
         return try await apiClient.post(
-            "api/transfers",
+            "transfers",
             body: request,
             idempotencyKey: idempotencyKey,
             as: TransferResponse.self
