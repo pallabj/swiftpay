@@ -2,9 +2,9 @@
   "wallet": {
     "id": "demo-wallet",
     "userId": "demo-user",
-    "balance": 1925,
+    "balance": 1625,
     "currency": "USD",
-    "updatedAt": "2026-11-11T13:28:43.644Z"
+    "updatedAt": "2026-11-12T08:56:07.192Z"
   },
   "recipients": [
     {
@@ -1254,6 +1254,30 @@
       "description": "Transfer to Jordan Lee",
       "status": "completed",
       "createdAt": "2026-11-11T13:28:43.644Z"
+    },
+    {
+      "id": "d02e5e15-81d3-4b94-8434-78f6b3706ac1",
+      "type": "debit",
+      "amount": 100,
+      "currency": "USD",
+      "recipientId": "recipient-1",
+      "recipientName": "Jordan Lee",
+      "recipientPhone": "+919000000001",
+      "description": "Transfer to Jordan Lee",
+      "status": "completed",
+      "createdAt": "2026-11-12T08:55:17.603Z"
+    },
+    {
+      "id": "d631fb44-4bb5-4ab4-8a6c-291f0989e977",
+      "type": "debit",
+      "amount": 200,
+      "currency": "USD",
+      "recipientId": "recipient-1",
+      "recipientName": "Jordan Lee",
+      "recipientPhone": "+919000000001",
+      "description": "Transfer to Jordan Lee",
+      "status": "completed",
+      "createdAt": "2026-11-12T08:56:07.192Z"
     }
   ],
   "idempotency": {
@@ -1528,6 +1552,42 @@
       },
       "wallet": {
         "balance": 1925,
+        "currency": "USD"
+      }
+    },
+    "5F5EE4C4-3EBA-45A4-B7A8-2E664D0DD93C": {
+      "transaction": {
+        "id": "d02e5e15-81d3-4b94-8434-78f6b3706ac1",
+        "type": "debit",
+        "amount": 100,
+        "currency": "USD",
+        "recipientId": "recipient-1",
+        "recipientName": "Jordan Lee",
+        "recipientPhone": "+919000000001",
+        "description": "Transfer to Jordan Lee",
+        "status": "completed",
+        "createdAt": "2026-11-12T08:55:17.603Z"
+      },
+      "wallet": {
+        "balance": 1825,
+        "currency": "USD"
+      }
+    },
+    "79327D74-55E7-44C0-8553-46E4447B6EB0": {
+      "transaction": {
+        "id": "d631fb44-4bb5-4ab4-8a6c-291f0989e977",
+        "type": "debit",
+        "amount": 200,
+        "currency": "USD",
+        "recipientId": "recipient-1",
+        "recipientName": "Jordan Lee",
+        "recipientPhone": "+919000000001",
+        "description": "Transfer to Jordan Lee",
+        "status": "completed",
+        "createdAt": "2026-11-12T08:56:07.192Z"
+      },
+      "wallet": {
+        "balance": 1625,
         "currency": "USD"
       }
     }
