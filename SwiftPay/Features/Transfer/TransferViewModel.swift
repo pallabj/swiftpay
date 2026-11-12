@@ -16,7 +16,10 @@ final class TransferViewModel: ObservableObject {
 
     @Published private(set) var isLookingUpRecipient = false
     @Published private(set) var recipientLookupError: String?
+    @Published private(set) var quickContacts: [QuickContact] = []
+    @Published private(set) var quickContactError: String?
     private var recipientLookupRequestID = UUID()
+    private var isSelectingQuickContact = false
 
     // TRANSFER STATES
     @Published private(set) var isSubmittingTransfer = false
@@ -27,6 +30,7 @@ final class TransferViewModel: ObservableObject {
 
     private let recipientRepository: RecipientRepository
     private let transferRepository: TransferRepository
+    private let quickContactRepository: QuickContactRepository
 
     private var availableBalance: Decimal
 
@@ -36,12 +40,14 @@ final class TransferViewModel: ObservableObject {
     init(
         recipientRepository: RecipientRepository,
         transferRepository: TransferRepository,
+        quickContactRepository: QuickContactRepository,
         availableBalance: Decimal,
         onTransferSuccessful:
             @escaping (_ balance: Decimal, _ txn: Transaction) async -> Void
     ) {
         self.recipientRepository = recipientRepository
         self.transferRepository = transferRepository
+        self.quickContactRepository = quickContactRepository
         self.onTransferSuccessful = onTransferSuccessful
         self.availableBalance = availableBalance
     }
@@ -107,7 +113,42 @@ final class TransferViewModel: ObservableObject {
         isLookingUpRecipient = false
     }
 
+    func loadQuickContacts() async {
+        do {
+            quickContacts = try await quickContactRepository.fetchRecentContacts()
+            quickContactError = nil
+        } catch {
+            quickContactError = error.userMessage
+        }
+    }
+
+    func selectQuickContact(_ quickContact: QuickContact) {
+        let digits = quickContact.phone.filter { $0 >= "0" && $0 <= "9" }
+        let phone = String(digits.suffix(10))
+        guard phone.count == 10 else { return }
+
+        recipientLookupRequestID = UUID()
+        recipientLookupError = nil
+        isLookingUpRecipient = false
+        amount = ""
+        recipient = Recipient(
+            id: quickContact.id,
+            name: quickContact.name,
+            phone: quickContact.phone
+        )
+
+        if phoneNumber != phone {
+            isSelectingQuickContact = true
+            phoneNumber = phone
+        }
+    }
+
     func updatePhoneNumber(_ input: String) {
+        if isSelectingQuickContact {
+            isSelectingQuickContact = false
+            return
+        }
+
         let digits = input.filter { $0 >= "0" && $0 <= "9" }
         let normalizedPhone = String(digits.prefix(10))
 

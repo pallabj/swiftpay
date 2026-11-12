@@ -1,9 +1,11 @@
 const express = require("express");
+const { randomUUID } = require("node:crypto");
 const { demoUser, readState, writeState, createTransfer } = require("./store");
 const config = require("./config");
 
 const app = express();
 const port = config.port;
+const activeAuthTokens = new Map();
 const simulatedTransferFailures = new Map([
   [
     1010,
@@ -41,7 +43,10 @@ app.use((_request, response, next) => {
 
 // Enable one force-status flag to exercise the app's API error states.
 app.use((_request, response, next) => {
-  if (config.forceAPI401) {
+  if (
+    config.forceAPI401
+    && !["/api/auth/login", "/auth/login"].includes(_request.path)
+  ) {
     return response.status(401).json({
       error: {
         code: "FORCED_UNAUTHORIZED",
@@ -61,6 +66,30 @@ app.use((_request, response, next) => {
 });
 
 app.use(express.json({ limit: "16kb" }));
+
+app.post(["/api/auth/login", "/auth/login"], (_request, response) => {
+  const token = randomUUID();
+  activeAuthTokens.set(token, demoUser.id);
+  return response.json({ token });
+});
+
+app.use((request, response, next) => {
+  const authorization = request.get("Authorization") ?? "";
+  const bearerMatch = authorization.match(/^Bearer\s+([^\s]+)$/i);
+  const userId = bearerMatch ? activeAuthTokens.get(bearerMatch[1]) : undefined;
+
+  if (!userId) {
+    return response.status(401).json({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Your session has expired. Please log in again.",
+      },
+    });
+  }
+
+  request.authenticatedUserId = userId;
+  return next();
+});
 
 app.get("/api/health", (_request, response) => {
   response.json({ status: "ok" });
@@ -126,9 +155,9 @@ function parsePaginationValue(value, defaultValue, maximum = Number.MAX_SAFE_INT
   return Number.isSafeInteger(parsedValue) && parsedValue <= maximum ? parsedValue : null;
 }
 
-function encodeTransactionCursor(transaction) {
+function encodeTransactionCursor(transaction, scope) {
   return Buffer.from(
-    JSON.stringify({ createdAt: transaction.createdAt, id: transaction.id }),
+    JSON.stringify({ createdAt: transaction.createdAt, id: transaction.id, scope }),
   ).toString("base64url");
 }
 
@@ -141,12 +170,17 @@ function decodeTransactionCursor(value) {
       typeof cursor.createdAt !== "string" ||
       !Number.isFinite(Date.parse(cursor.createdAt)) ||
       typeof cursor.id !== "string" ||
-      cursor.id.length === 0
+      cursor.id.length === 0 ||
+      (cursor.scope !== undefined && typeof cursor.scope !== "string")
     ) {
       return null;
     }
 
-    return { createdAt: cursor.createdAt, id: cursor.id };
+    return {
+      createdAt: cursor.createdAt,
+      id: cursor.id,
+      scope: cursor.scope,
+    };
   } catch {
     return null;
   }
@@ -168,12 +202,36 @@ function compareTransactionsNewestFirst(first, second) {
   return first.id > second.id ? -1 : 1;
 }
 
+function matchesTransactionSearch(transaction, search) {
+  if (search.length === 0) return true;
+
+  const normalizedName = (transaction.recipientName ?? "").toLocaleLowerCase();
+  const searchDigits = search.replace(/\D/g, "");
+  const phoneDigits = (transaction.recipientPhone ?? "").replace(/\D/g, "");
+  const amount = String(transaction.amount);
+  const numericSearch = Number(search);
+
+  return normalizedName.includes(search)
+    || (searchDigits.length > 0 && phoneDigits.includes(searchDigits))
+    || amount.includes(search)
+    || (Number.isFinite(numericSearch) && Number(transaction.amount) === numericSearch);
+}
+
 app.get(["/transactions", "/api/transactions"], (request, response) => {
   const limit = parsePaginationValue(request.query.limit, 10, 50);
   const cursorValue = request.query.after;
   const cursor = cursorValue === undefined
     ? null
     : decodeTransactionCursor(cursorValue);
+  const typeValue = request.query.type;
+  const searchValue = request.query.search;
+  const search = typeof searchValue === "string"
+    ? searchValue.trim().toLocaleLowerCase()
+    : "";
+  const scope = JSON.stringify({
+    type: typeValue ?? null,
+    search,
+  });
 
   if (limit === null || limit < 1) {
     return response.status(400).json({
@@ -185,11 +243,39 @@ app.get(["/transactions", "/api/transactions"], (request, response) => {
       error: { code: "INVALID_CURSOR", message: "after must be a valid transaction cursor." },
     });
   }
+  if (typeValue !== undefined && !["credit", "debit"].includes(typeValue)) {
+    return response.status(400).json({
+      error: { code: "INVALID_TRANSACTION_TYPE", message: "type must be credit or debit." },
+    });
+  }
+  if (searchValue !== undefined && typeof searchValue !== "string") {
+    return response.status(400).json({
+      error: { code: "INVALID_SEARCH", message: "search must be a string." },
+    });
+  }
+  if (search.length > 100) {
+    return response.status(400).json({
+      error: { code: "INVALID_SEARCH", message: "search must be 100 characters or fewer." },
+    });
+  }
+  if (cursor?.scope !== undefined && cursor.scope !== scope) {
+    return response.status(400).json({
+      error: { code: "CURSOR_QUERY_MISMATCH", message: "The cursor belongs to a different search or filter." },
+    });
+  }
 
   const state = readState();
-  const transactions = [...state.transactions].sort(
+  const transactions = state.transactions.map((transaction) => {
+    const recipient = state.recipients.find(({ id }) => id === transaction.recipientId);
+    return {
+      ...transaction,
+      recipientPhone: transaction.recipientPhone ?? recipient?.phone,
+    };
+  }).filter((transaction) => typeValue === undefined || transaction.type === typeValue)
+    .filter((transaction) => matchesTransactionSearch(transaction, search))
+    .sort(
     compareTransactionsNewestFirst,
-  );
+    );
   const eligibleTransactions = cursor
     ? transactions.filter((transaction) => comesAfterTransactionCursor(transaction, cursor))
     : transactions;
@@ -197,7 +283,7 @@ app.get(["/transactions", "/api/transactions"], (request, response) => {
   const hasMore = pageWithLookahead.length > limit;
   const page = pageWithLookahead.slice(0, limit);
   const nextCursor = hasMore
-    ? encodeTransactionCursor(page[page.length - 1])
+    ? encodeTransactionCursor(page[page.length - 1], scope)
     : null;
 
   response.json({

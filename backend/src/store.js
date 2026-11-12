@@ -171,6 +171,7 @@ function createTransfer(state, { recipient, amount, note }) {
     currency: state.wallet.currency,
     recipientId: recipient.id,
     recipientName: recipient.name,
+    recipientPhone: recipient.phone,
     description: note || `Transfer to ${recipient.name}`,
     status: "completed",
     createdAt: new Date().toISOString(),

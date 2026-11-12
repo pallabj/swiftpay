@@ -10,12 +10,14 @@ enum APIClientError: Error {
     case network(Error)
     case decoding(Error)
     case encoding(Error)
+    case authenticationStorage(Error)
 
     var userMessage: String {
         switch self {
         case let .httpStatus(_, message):
             return message
-        case .invalidURL, .invalidResponse, .network(_), .decoding(_), .encoding:
+        case .invalidURL, .invalidResponse, .network(_), .decoding(_), .encoding,
+            .authenticationStorage(_):
             return Self.genericUserMessage
         }
     }
@@ -41,14 +43,23 @@ private struct APIErrorBody: Decodable {
 final class APIClient {
     private let baseUrl: URL
     private let session: URLSession
+    private let authTokenStore: AuthTokenStore
+    private let sessionManager: SessionManager
     private let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "SwiftPay",
         category: "APIClient"
     )
 
-    init(baseUrl: URL, session: URLSession) {
+    init(
+        baseUrl: URL,
+        session: URLSession,
+        authTokenStore: AuthTokenStore,
+        sessionManager: SessionManager
+    ) {
         self.baseUrl = baseUrl
         self.session = session
+        self.authTokenStore = authTokenStore
+        self.sessionManager = sessionManager
     }
 
     func get<Response: Decodable>(
@@ -56,11 +67,12 @@ final class APIClient {
         queryItems: [URLQueryItem] = [],
         as responseType: Response.Type
     ) async throws -> Response {
-        let request = try makeRequest(
+        var request = try makeRequest(
             endpoint: endpoint,
             method: "GET",
             queryItems: queryItems
         )
+        try await addAuthorizationHeader(to: &request, required: true)
         return try await send(request, as: responseType)
     }
 
@@ -68,9 +80,14 @@ final class APIClient {
         _ endpoint: String,
         body: Body,
         idempotencyKey: String,
+        requiresAuthentication: Bool = true,
         as responseType: Response.Type
     ) async throws -> Response {
         var request = try makeRequest(endpoint: endpoint, method: "POST")
+        try await addAuthorizationHeader(
+            to: &request,
+            required: requiresAuthentication
+        )
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key")
 
@@ -83,6 +100,22 @@ final class APIClient {
         }
 
         return try await send(request, as: responseType)
+    }
+
+    private func addAuthorizationHeader(
+        to request: inout URLRequest,
+        required: Bool
+    ) async throws {
+        guard required else { return }
+
+        do {
+            guard let token = try await authTokenStore.fetchToken() else { return }
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } catch {
+            let apiError = APIClientError.authenticationStorage(error)
+            log(apiError, for: request)
+            throw apiError
+        }
     }
 
     private func makeRequest(
@@ -135,6 +168,15 @@ final class APIClient {
         }
 
         guard (200 ..< 300).contains(httpResponse.statusCode) else {
+            if httpResponse.statusCode == 401 {
+                let cleanupFailures = await sessionManager.handleUnauthorized()
+                if !cleanupFailures.isEmpty {
+                    logger.error(
+                        "Unauthorized session cleanup failed: \(cleanupFailures.joined(separator: "; "), privacy: .private)"
+                    )
+                }
+            }
+
             let message = decodeBackendErrorMessage(from: data, for: request)
                 ?? APIClientError.genericUserMessage
             let error = APIClientError.httpStatus(

@@ -36,6 +36,7 @@ actor CachedTransactionStore {
                 cachedTransaction.currency = transaction.currency
                 cachedTransaction.recipientId = transaction.recipientId
                 cachedTransaction.recipientName = transaction.recipientName
+                cachedTransaction.recipientPhone = transaction.recipientPhone
                 cachedTransaction.transactionDescription =
                     transaction.description
                 cachedTransaction.status = transaction.status
@@ -46,8 +47,7 @@ actor CachedTransactionStore {
         }
     }
 
-    func fetchPagination() throws -> TransactionPagination? {
-        let paginationID = "transaction-history"
+    func fetchPagination(id paginationID: String) throws -> TransactionPagination? {
         var descriptor = FetchDescriptor<CachedTransactionPagination>(
             predicate: #Predicate { $0.id == paginationID }
         )
@@ -60,30 +60,42 @@ actor CachedTransactionStore {
     func savePage(
         transactions: [Transaction],
         pagination: TransactionPagination,
-        advanceCheckpoint: Bool
+        checkpointID: String
     ) throws {
         try upsertTransactions(transactions)
 
-        let paginationID = "transaction-history"
         let descriptor = FetchDescriptor<CachedTransactionPagination>(
-            predicate: #Predicate { $0.id == paginationID }
+            predicate: #Predicate { $0.id == checkpointID }
         )
 
         if let cachedPagination = try modelContext.fetch(descriptor).first {
-            if advanceCheckpoint {
-                cachedPagination.limit = pagination.limit
-                cachedPagination.hasMore = pagination.hasMore
-                cachedPagination.nextCursor = pagination.nextCursor
-            }
+            cachedPagination.limit = pagination.limit
+            cachedPagination.hasMore = pagination.hasMore
+            cachedPagination.nextCursor = pagination.nextCursor
         } else {
             modelContext.insert(
                 CachedTransactionPagination(
+                    id: checkpointID,
                     limit: pagination.limit,
                     hasMore: pagination.hasMore,
                     nextCursor: pagination.nextCursor
                 )
             )
         }
+
+        try modelContext.save()
+    }
+
+    func clear() throws {
+        let transactions = try modelContext.fetch(
+            FetchDescriptor<CachedTransaction>()
+        )
+        transactions.forEach(modelContext.delete)
+
+        let pagination = try modelContext.fetch(
+            FetchDescriptor<CachedTransactionPagination>()
+        )
+        pagination.forEach(modelContext.delete)
 
         try modelContext.save()
     }

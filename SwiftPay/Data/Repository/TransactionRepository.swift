@@ -9,13 +9,25 @@ struct TransactionRepository {
         self.cachedTransactionStore = cachedTransactionStore
     }
 
-    func fetchTransactions(after cursor: String? = nil, limit: Int = 10)
+    func fetchTransactions(
+        after cursor: String? = nil,
+        limit: Int = 10,
+        search: String? = nil,
+        type: String? = nil,
+        checkpointID: String = "transaction-history"
+    )
         async throws
         -> TransactionPage
     {
         var queryItems = [URLQueryItem(name: "limit", value: String(limit))]
         if let cursor {
             queryItems.append(URLQueryItem(name: "after", value: cursor))
+        }
+        if let search, !search.isEmpty {
+            queryItems.append(URLQueryItem(name: "search", value: search))
+        }
+        if let type {
+            queryItems.append(URLQueryItem(name: "type", value: type))
         }
 
         let page = try await apiClient.get(
@@ -27,7 +39,7 @@ struct TransactionRepository {
         try await cachedTransactionStore.savePage(
             transactions: page.transactions,
             pagination: page.pagination,
-            advanceCheckpoint: cursor != nil
+            checkpointID: checkpointID
         )
         return page
     }
@@ -40,7 +52,7 @@ struct TransactionRepository {
         try await cachedTransactionStore.saveTransactions([transaction])
     }
 
-    func fetchCachedPagination() async throws -> TransactionPagination? {
-        try await cachedTransactionStore.fetchPagination()
+    func fetchCachedPagination(id: String) async throws -> TransactionPagination? {
+        try await cachedTransactionStore.fetchPagination(id: id)
     }
 }

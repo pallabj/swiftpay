@@ -9,6 +9,7 @@ final class CachedTransaction {
   var currency: String
   var recipientId: String?
   var recipientName: String?
+  var recipientPhone: String?
   var transactionDescription: String
   var status: String
   var createdAt: Date
@@ -20,6 +21,7 @@ final class CachedTransaction {
     currency = transaction.currency
     recipientId = transaction.recipientId
     recipientName = transaction.recipientName
+    recipientPhone = transaction.recipientPhone
     transactionDescription = transaction.description
     status = transaction.status
     createdAt = transaction.createdAt
@@ -33,6 +35,7 @@ final class CachedTransaction {
       currency: currency,
       recipientId: recipientId,
       recipientName: recipientName,
+      recipientPhone: recipientPhone,
       description: transactionDescription,
       status: status,
       createdAt: createdAt

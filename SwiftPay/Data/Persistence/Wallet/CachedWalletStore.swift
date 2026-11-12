@@ -30,4 +30,10 @@ actor CachedWalletStore {
 
         try modelContext.save()
     }
+
+    func clear() throws {
+        let cachedWallets = try modelContext.fetch(FetchDescriptor<CachedWallet>())
+        cachedWallets.forEach(modelContext.delete)
+        try modelContext.save()
+    }
 }

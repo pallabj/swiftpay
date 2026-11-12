@@ -10,6 +10,7 @@ struct TransferView: View {
     init(
         recipientRepository: RecipientRepository,
         transferRepository: TransferRepository,
+        quickContactRepository: QuickContactRepository,
         availableBalance: Decimal,
         onTransferSuccessful:
             @escaping (_ balance: Decimal, _ txn: Transaction) async ->
@@ -19,6 +20,7 @@ struct TransferView: View {
             wrappedValue: TransferViewModel(
                 recipientRepository: recipientRepository,
                 transferRepository: transferRepository,
+                quickContactRepository: quickContactRepository,
                 availableBalance: availableBalance,
                 onTransferSuccessful: onTransferSuccessful
             )
@@ -63,6 +65,9 @@ struct TransferView: View {
         }
         .navigationTitle("Send Money")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await viewModel.loadQuickContacts()
+        }
         .sheet(isPresented: $isShowingPINModal) {
             PINEntrySheet(viewModel: viewModel) { pin in
                 viewModel.submitPIN(pin)

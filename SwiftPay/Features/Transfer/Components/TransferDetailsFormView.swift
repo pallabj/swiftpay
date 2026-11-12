@@ -105,6 +105,82 @@ struct TransferDetailsFormView: View {
             }
             .buttonStyle(.plain)
             .disabled(!viewModel.canProceed)
+
+            if !viewModel.quickContacts.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Quick contacts")
+                        .font(.headline)
+
+                    LazyVStack(spacing: 10) {
+                        ForEach(viewModel.quickContacts) { contact in
+                            Button {
+                                viewModel.selectQuickContact(contact)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Text(String(contact.name.prefix(1)).uppercased())
+                                        .font(.headline)
+                                        .foregroundStyle(.white)
+                                        .frame(width: 44, height: 44)
+                                        .background(
+                                            LinearGradient(
+                                                colors: [.blue, .indigo],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            in: Circle()
+                                        )
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(contact.name)
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(.primary)
+
+                                        Text(contact.phone)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(.blue)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(14)
+                                .background(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.blue.opacity(0.10),
+                                            Color.indigo.opacity(0.06),
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    in: RoundedRectangle(cornerRadius: 16)
+                                )
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .strokeBorder(
+                                            Color.blue.opacity(0.12),
+                                            lineWidth: 1
+                                        )
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(
+                                "Send to \(contact.name), \(contact.phone)"
+                            )
+                        }
+                    }
+                }
+            }
+
+            if let error = viewModel.quickContactError {
+                Text("Quick contacts unavailable: \(error)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
