@@ -27,6 +27,7 @@ struct ProfileView: View {
 }
 
 private struct ProfileScreen: View {
+    @Environment(\.themeManager) private var themeManager
     let user: User?
     let isLoading: Bool
     let errorMessage: String?
@@ -41,6 +42,21 @@ private struct ProfileScreen: View {
             if let user {
                 List {
                     UserProfileDetailsView(user)
+
+                    if let themeManager {
+                        Section("Appearance") {
+                            @Bindable var themeManager = themeManager
+                            Picker("Theme", selection: $themeManager.mode) {
+                                ForEach(ThemeMode.allCases) { mode in
+                                    Label(mode.displayName, systemImage: mode.systemImage)
+                                        .tag(mode)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .accessibilityLabel("App appearance")
+                        }
+                    }
+
                     if let errorMessage {
                         Section {
                             Label(errorMessage, systemImage: "wifi.slash")
@@ -91,7 +107,7 @@ private struct ProfileScreen: View {
                 .font(.caption.weight(.semibold))
                 .padding(.horizontal, 12)
                 .frame(minHeight: 40)
-                .background(Color.red.opacity(0.08), in: Capsule())
+                .background(AppTheme.dangerBackground, in: Capsule())
             }
             .buttonStyle(.plain)
             .padding(.trailing, 20)

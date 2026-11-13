@@ -10,9 +10,9 @@ struct TransferSuccessView: View {
 
             Image(systemName: "checkmark")
                 .font(.system(size: 32, weight: .bold))
-                .foregroundStyle(.green)
+                .foregroundStyle(AppTheme.success)
                 .frame(width: 80, height: 80)
-                .background(.green.opacity(0.12), in: Circle())
+                .background(AppTheme.successBackground, in: Circle())
 
             VStack(spacing: 8) {
                 Text("Payment successful")
@@ -54,7 +54,7 @@ struct TransferSuccessView: View {
             }
             .padding(20)
             .background(
-                Color.gray.opacity(0.08),
+                AppTheme.cardBackground,
                 in: RoundedRectangle(cornerRadius: 16)
             )
 
@@ -63,10 +63,10 @@ struct TransferSuccessView: View {
             Button(action: onDone) {
                 Text("Done")
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppTheme.onAccent)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(.blue, in: RoundedRectangle(cornerRadius: 16))
+                    .background(AppTheme.accent, in: RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
         }

@@ -24,7 +24,7 @@ struct TransactionDetailsSheet: View {
                                 : "arrow.up.right.circle.fill"
                         )
                         .font(.system(size: 44))
-                        .foregroundStyle(isCredit ? Color.green : Color.red)
+                        .foregroundStyle(isCredit ? AppTheme.success : AppTheme.danger)
 
                         Text(
                             signedAmount,
@@ -65,7 +65,7 @@ struct TransactionDetailsSheet: View {
                     }
                     .padding(20)
                     .background(
-                        Color.gray.opacity(0.08),
+                        AppTheme.cardBackground,
                         in: RoundedRectangle(cornerRadius: 16)
                     )
                 }

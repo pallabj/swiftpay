@@ -31,7 +31,7 @@ struct TransferDetailsFormView: View {
                 }
                 .padding(14)
                 .background(
-                    Color.gray.opacity(0.1),
+                    AppTheme.fieldBackground,
                     in: RoundedRectangle(cornerRadius: 12)
                 )
             }
@@ -51,13 +51,13 @@ struct TransferDetailsFormView: View {
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
-                    Color.green.opacity(0.1),
+                    AppTheme.successBackground,
                     in: RoundedRectangle(cornerRadius: 10)
                 )
             } else if let error = viewModel.recipientLookupError {
                 Text(error)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(AppTheme.danger)
             }
             if viewModel.canEnterAmount {
                 VStack(alignment: .leading, spacing: 8) {
@@ -68,7 +68,7 @@ struct TransferDetailsFormView: View {
                         .keyboardType(.decimalPad)
                         .padding(14)
                         .background(
-                            Color.gray.opacity(0.1),
+                            AppTheme.fieldBackground,
                             in: RoundedRectangle(cornerRadius: 12)
                         )
                         .submitLabel(.done)
@@ -84,7 +84,7 @@ struct TransferDetailsFormView: View {
                         systemImage: "exclamationmark.circle.fill"
                     )
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(AppTheme.danger)
                 }
             }
 
@@ -97,11 +97,11 @@ struct TransferDetailsFormView: View {
                     Image(systemName: "arrow.right")
                 }
                 .font(.headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(AppTheme.onAccent)
                 .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(.blue, in: RoundedRectangle(cornerRadius: 16))
+                .background(AppTheme.accent, in: RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
             .disabled(!viewModel.canProceed)
@@ -119,14 +119,10 @@ struct TransferDetailsFormView: View {
                                 HStack(spacing: 12) {
                                     Text(String(contact.name.prefix(1)).uppercased())
                                         .font(.headline)
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(AppTheme.onAccent)
                                         .frame(width: 44, height: 44)
                                         .background(
-                                            LinearGradient(
-                                                colors: [.blue, .indigo],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
+                                            AppTheme.accentGradient,
                                             in: Circle()
                                         )
 
@@ -144,25 +140,18 @@ struct TransferDetailsFormView: View {
 
                                     Image(systemName: "chevron.right")
                                         .font(.caption.weight(.semibold))
-                                        .foregroundStyle(.blue)
+                                        .foregroundStyle(AppTheme.accent)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(14)
                                 .background(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.blue.opacity(0.10),
-                                            Color.indigo.opacity(0.06),
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
+                                    AppTheme.bannerGradient,
                                     in: RoundedRectangle(cornerRadius: 16)
                                 )
                                 .overlay {
                                     RoundedRectangle(cornerRadius: 16)
                                         .strokeBorder(
-                                            Color.blue.opacity(0.12),
+                                            AppTheme.cardBorder,
                                             lineWidth: 1
                                         )
                                 }

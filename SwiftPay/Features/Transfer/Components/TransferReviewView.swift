@@ -22,7 +22,7 @@ struct TransferReviewView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "person.crop.circle.fill")
                         .font(.largeTitle)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(AppTheme.accent)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(recipient.name)
@@ -48,7 +48,7 @@ struct TransferReviewView: View {
             }
             .padding(20)
             .background(
-                Color.gray.opacity(0.08),
+                AppTheme.cardBackground,
                 in: RoundedRectangle(cornerRadius: 16)
             )
 
@@ -59,7 +59,7 @@ struct TransferReviewView: View {
             if let errorMessage {
                 Text(errorMessage)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(AppTheme.danger)
             }
             
             Button(action: onEditDetails) {
@@ -72,7 +72,7 @@ struct TransferReviewView: View {
                 Group {
                     if isSubmitting {
                         ProgressView()
-                            .tint(.white)
+                            .tint(AppTheme.onAccent)
                     } else {
                         HStack {
                             Text("Pay")
@@ -82,11 +82,11 @@ struct TransferReviewView: View {
                     }
                 }
                 .font(.headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(AppTheme.onAccent)
                 .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(.blue, in: RoundedRectangle(cornerRadius: 16))
+                .background(AppTheme.accent, in: RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
             .disabled(isSubmitting)

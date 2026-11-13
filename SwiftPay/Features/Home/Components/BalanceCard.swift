@@ -10,7 +10,7 @@ struct BalanceCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Available balance")
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(AppTheme.onAccent.opacity(0.85))
 
                 Text(balance, format: .currency(code: currency))
                     .font(.system(size: 36, weight: .bold, design: .rounded))
@@ -21,23 +21,17 @@ struct BalanceCard: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(AppTheme.accent)
                     .background(
-                        .white,
+                        AppTheme.onAccent,
                         in: RoundedRectangle(cornerRadius: 16)
                     )
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .foregroundStyle(.white)
-        .background(
-            LinearGradient(
-                colors: [.blue, .indigo],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .foregroundStyle(AppTheme.onAccent)
+        .background(AppTheme.accentGradient)
         .clipShape(RoundedRectangle(cornerRadius: 24))
     }
 }

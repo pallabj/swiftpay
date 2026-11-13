@@ -121,7 +121,7 @@ struct HistoryView: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.blue)
+                .foregroundStyle(AppTheme.accent)
 
             TextField(
                 "Search name, phone, or amount",
@@ -153,9 +153,9 @@ struct HistoryView: View {
         )
         .overlay {
             RoundedRectangle(cornerRadius: 15)
-                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+                .strokeBorder(AppTheme.cardBorder, lineWidth: 1)
         }
-        .shadow(color: .black.opacity(0.035), radius: 8, x: 0, y: 3)
+        .shadow(color: AppTheme.shadow, radius: 8, x: 0, y: 3)
         .padding(.horizontal)
         .padding(.top, 10)
         .padding(.bottom, 14)
@@ -184,21 +184,15 @@ struct HistoryView: View {
         } label: {
             Text(filter.title)
                 .font(.subheadline.weight(isSelected ? .semibold : .medium))
-                .foregroundStyle(isSelected ? Color.white : Color.secondary)
+                .foregroundStyle(isSelected ? AppTheme.onAccent : .secondary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 38)
                 .background {
                     if isSelected {
                         Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [.blue, .indigo],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .fill(AppTheme.accentHorizontalGradient)
                             .shadow(
-                                color: .blue.opacity(0.2),
+                                color: AppTheme.shadow,
                                 radius: 5,
                                 x: 0,
                                 y: 2

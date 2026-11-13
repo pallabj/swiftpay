@@ -9,6 +9,7 @@ struct AppDependencies {
     let quickContactStore: QuickContactStore
 
     let sessionManager: SessionManager
+    let themeManager: ThemeManager
     let authenticationRepository: AuthenticationRepository
     let walletRepository: WalletRepository
     let transactionRepository: TransactionRepository
@@ -17,7 +18,9 @@ struct AppDependencies {
     let transferRepository: TransferRepository
     let userRepository: UserRepository
 
-    init() throws {
+    init(
+        themeModeStore: any ThemeModeStoring = UserDefaultsThemeModeStore()
+    ) throws {
         guard let baseURL = URL(string: "http://localhost:8000/api") else {
             fatalError("The API base URL is invalid.")
         }
@@ -53,6 +56,7 @@ struct AppDependencies {
         self.cachedTransactionStore = cachedTransactionStore
         self.quickContactStore = quickContactStore
         self.sessionManager = sessionManager
+        themeManager = ThemeManager(store: themeModeStore)
         authenticationRepository = AuthenticationRepository(
             apiClient: apiClient,
             sessionTokenStore: sessionTokenStore

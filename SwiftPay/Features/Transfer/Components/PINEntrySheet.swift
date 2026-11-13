@@ -50,7 +50,7 @@ struct PINEntrySheet: View {
                 ForEach(0..<4, id: \.self) { index in
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(.gray.opacity(0.4), lineWidth: 1)
+                            .stroke(AppTheme.fieldBorder, lineWidth: 1)
                             .frame(width: 56, height: 60)
 
                         if index < pin.count {
@@ -69,7 +69,7 @@ struct PINEntrySheet: View {
             if let errorMessage = viewModel.pinEntryError {
                 Text(errorMessage)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(AppTheme.danger)
             }
 
             Button {
@@ -81,10 +81,10 @@ struct PINEntrySheet: View {
             } label: {
                 Text("Confirm PIN")
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppTheme.onAccent)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
-                    .background(.blue, in: RoundedRectangle(cornerRadius: 14))
+                    .background(AppTheme.accent, in: RoundedRectangle(cornerRadius: 14))
             }
             .buttonStyle(.plain)
             .disabled(pin.count != 4)

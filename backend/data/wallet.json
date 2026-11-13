@@ -2,9 +2,9 @@
   "wallet": {
     "id": "demo-wallet",
     "userId": "demo-user",
-    "balance": 1625,
+    "balance": 5000,
     "currency": "USD",
-    "updatedAt": "2026-11-12T08:56:07.192Z"
+    "updatedAt": "2026-11-13T09:53:03.674Z"
   },
   "recipients": [
     {
@@ -1278,6 +1278,30 @@
       "description": "Transfer to Jordan Lee",
       "status": "completed",
       "createdAt": "2026-11-12T08:56:07.192Z"
+    },
+    {
+      "id": "dbbe918c-f8f2-4f0e-a42c-8a2e308d0404",
+      "type": "debit",
+      "amount": 120,
+      "currency": "USD",
+      "recipientId": "recipient-1",
+      "recipientName": "Jordan Lee",
+      "recipientPhone": "+919000000001",
+      "description": "Transfer to Jordan Lee",
+      "status": "completed",
+      "createdAt": "2026-11-13T09:52:44.000Z"
+    },
+    {
+      "id": "d42af996-212c-4504-81ad-5a8f06572e3e",
+      "type": "debit",
+      "amount": 1505,
+      "currency": "USD",
+      "recipientId": "recipient-3",
+      "recipientName": "Casey Patel",
+      "recipientPhone": "+919000000003",
+      "description": "Transfer to Casey Patel",
+      "status": "completed",
+      "createdAt": "2026-11-13T09:53:03.674Z"
     }
   ],
   "idempotency": {
@@ -1588,6 +1612,42 @@
       },
       "wallet": {
         "balance": 1625,
+        "currency": "USD"
+      }
+    },
+    "F3087650-488D-4DD7-87F1-74977C12069E": {
+      "transaction": {
+        "id": "dbbe918c-f8f2-4f0e-a42c-8a2e308d0404",
+        "type": "debit",
+        "amount": 120,
+        "currency": "USD",
+        "recipientId": "recipient-1",
+        "recipientName": "Jordan Lee",
+        "recipientPhone": "+919000000001",
+        "description": "Transfer to Jordan Lee",
+        "status": "completed",
+        "createdAt": "2026-11-13T09:52:44.000Z"
+      },
+      "wallet": {
+        "balance": 1505,
+        "currency": "USD"
+      }
+    },
+    "0A31D6CF-48E1-4B48-BE29-B3E216B4A7EE": {
+      "transaction": {
+        "id": "d42af996-212c-4504-81ad-5a8f06572e3e",
+        "type": "debit",
+        "amount": 1505,
+        "currency": "USD",
+        "recipientId": "recipient-3",
+        "recipientName": "Casey Patel",
+        "recipientPhone": "+919000000003",
+        "description": "Transfer to Casey Patel",
+        "status": "completed",
+        "createdAt": "2026-11-13T09:53:03.674Z"
+      },
+      "wallet": {
+        "balance": 0,
         "currency": "USD"
       }
     }

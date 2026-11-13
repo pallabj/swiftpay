@@ -15,8 +15,8 @@ func UserProfileDetailsView(_ user: User) -> some View {
                             .resizable()
                             .scaledToFit()
                             .padding(16)
-                            .foregroundStyle(.blue)
-                            .background(Color.blue.opacity(0.1))
+                            .foregroundStyle(AppTheme.accent)
+                            .background(AppTheme.accentGlow)
                     }
                 }
                 .frame(width: 96, height: 96)

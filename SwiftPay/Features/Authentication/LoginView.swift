@@ -20,28 +20,18 @@ struct LoginView: View {
             Color(uiColor: .systemBackground)
                 .ignoresSafeArea()
 
-            Circle()
-                .fill(Color.blue.opacity(0.08))
-                .frame(width: 280, height: 280)
-                .blur(radius: 8)
-                .offset(x: 170, y: -330)
-
             VStack(spacing: 0) {
                 Spacer()
 
                 Image(systemName: "arrow.left.arrow.right")
                     .font(.system(size: 30, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppTheme.onAccent)
                     .frame(width: 76, height: 76)
                     .background(
-                        LinearGradient(
-                            colors: [.blue, .indigo],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
+                        AppTheme.accentGradient,
                         in: RoundedRectangle(cornerRadius: 24)
                     )
-                    .shadow(color: .blue.opacity(0.24), radius: 18, y: 8)
+                    .shadow(color: AppTheme.shadow, radius: 18, y: 8)
 
                 Text("SwiftPay")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
@@ -63,7 +53,7 @@ struct LoginView: View {
                 if let errorMessage = viewModel.errorMessage {
                     Label(errorMessage, systemImage: "exclamationmark.circle.fill")
                         .font(.subheadline)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(AppTheme.danger)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.bottom, 12)
                 }
@@ -74,22 +64,18 @@ struct LoginView: View {
                     HStack(spacing: 10) {
                         if viewModel.isLoggingIn {
                             ProgressView()
-                                .tint(.white)
+                                .tint(AppTheme.onAccent)
                         } else {
                             Text("Login")
                             Image(systemName: "arrow.right")
                         }
                     }
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppTheme.onAccent)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(
-                        LinearGradient(
-                            colors: [.blue, .indigo],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
+                        AppTheme.accentHorizontalGradient,
                         in: RoundedRectangle(cornerRadius: 17)
                     )
                 }

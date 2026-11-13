@@ -14,10 +14,10 @@ struct TransactionRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: isCredit ? "arrow.down.left" : "arrow.up.right")
-                .foregroundStyle(isCredit ? Color.green : Color.red)
+                .foregroundStyle(isCredit ? AppTheme.success : AppTheme.danger)
                 .frame(width: 44, height: 44)
                 .background(
-                    (isCredit ? Color.green : Color.red).opacity(0.12),
+                    (isCredit ? AppTheme.successBackground : AppTheme.dangerBackground),
                     in: Circle()
                 )
 
@@ -39,7 +39,7 @@ struct TransactionRow: View {
 
             Text(signedAmount, format: .currency(code: transaction.currency))
                 .fontWeight(.semibold)
-                .foregroundStyle(isCredit ? Color.green : Color.red)
+                .foregroundStyle(isCredit ? AppTheme.success : AppTheme.danger)
         }
         .padding(.vertical, 6)
     }

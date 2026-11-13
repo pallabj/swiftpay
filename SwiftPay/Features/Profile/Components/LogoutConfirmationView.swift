@@ -27,9 +27,9 @@ struct LogoutConfirmationView: View {
             HStack(alignment: .center, spacing: 12) {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
                     .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(.red)
+                    .foregroundStyle(AppTheme.danger)
                     .frame(width: 44, height: 44)
-                    .background(.red.opacity(0.10), in: Circle())
+                    .background(AppTheme.dangerBackground, in: Circle())
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Log out of SwiftPay?")
@@ -53,11 +53,11 @@ struct LogoutConfirmationView: View {
                 Button(role: .destructive, action: onConfirm) {
                     Text("Log Out")
                         .font(.headline)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(AppTheme.onAccent)
                         .frame(maxWidth: .infinity)
                         .frame(height: LogoutConfirmationMetrics.buttonHeight)
                         .background(
-                            .red,
+                            AppTheme.danger,
                             in: RoundedRectangle(cornerRadius: 14)
                         )
                 }

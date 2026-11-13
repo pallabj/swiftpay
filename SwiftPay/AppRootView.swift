@@ -7,6 +7,7 @@ struct AppRootView: View {
     @StateObject private var historyViewModel: HistoryViewModel
     @StateObject private var homeViewModel: HomeViewModel
     @ObservedObject private var sessionManager: SessionManager
+    @State private var themeManager: ThemeManager
 
     func onTransferSuccessful(_ balance: Decimal, _ txn: Transaction) async {
         await homeViewModel.updateBalance(balance)
@@ -20,6 +21,7 @@ struct AppRootView: View {
 
     init(dependencies: AppDependencies) {
         self.dependencies = dependencies
+        _themeManager = State(initialValue: dependencies.themeManager)
         _sessionManager = ObservedObject(
             wrappedValue: dependencies.sessionManager
         )
@@ -69,9 +71,12 @@ struct AppRootView: View {
                 }
             }
         }
+        .environment(\.themeManager, themeManager)
         .task {
             await sessionManager.restoreSession()
         }
+        .tint(AppTheme.accent)
+        .preferredColorScheme(themeManager.mode.colorScheme)
         .task(id: sessionManager.isAuthenticated) {
             guard sessionManager.isAuthenticated else { return }
 

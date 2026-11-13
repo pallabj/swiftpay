@@ -75,14 +75,10 @@ struct HomeView: View {
         HStack(spacing: 14) {
             Image(systemName: "hand.wave.fill")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(AppTheme.onAccent)
                 .frame(width: 46, height: 46)
                 .background(
-                    LinearGradient(
-                        colors: [.blue, .indigo],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
+                    AppTheme.accentGradient,
                     in: RoundedRectangle(cornerRadius: 15)
                 )
 
@@ -100,20 +96,10 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color.blue.opacity(0.10),
-                    Color.indigo.opacity(0.06),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: 20)
-        )
+        .background(AppTheme.bannerGradient, in: RoundedRectangle(cornerRadius: 20))
         .overlay {
             RoundedRectangle(cornerRadius: 20)
-                .strokeBorder(Color.blue.opacity(0.10), lineWidth: 1)
+                .strokeBorder(AppTheme.cardBorder, lineWidth: 1)
         }
     }
 
