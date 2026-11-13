@@ -43,6 +43,12 @@ Use one of the recipient numbers supported by the backend:
 
 The confirmation PIN is `1234`. Transfers update the demo wallet and transaction history through the local backend. These values and transfer behavior are for demonstration only; there is no real payment processing.
 
+## Authentication
+
+The app signs in against the backend's demo login endpoint, which returns a signed **HS256 JWT access token**. The app keeps that token in memory only — it is never written to disk — so a relaunch always returns to the sign-in screen. The same token is sent as `Authorization: Bearer <token>` on every authenticated request, and the backend verifies its signature and expiry before the route handler runs.
+
+Because the token is self-contained, restarting the backend does not invalidate it. Signing out is a purely local operation: the app drops the token from memory and clears its cached data, and the backend holds no session state to clean up.
+
 ## Architecture
 
 - **SwiftUI views** render the Home, History, Profile, and transfer screens.
@@ -50,6 +56,7 @@ The confirmation PIN is `1234`. Transfers update the demo wallet and transaction
 - **Repositories** coordinate wallet, transaction, recipient, transfer, and user API calls.
 - **`APIClient`** uses `URLSession`, `async`/`await`, and `Codable` for JSON requests and responses.
 - **`AppDependencies`** creates and shares the API client and repositories.
+- **`SessionTokenStore`** holds the access token for the lifetime of the app run.
 
 ## API and backend
 

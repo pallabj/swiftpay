@@ -14,6 +14,38 @@ npm start
 
 The API listens on `http://localhost:8000` by default. On first request, the backend creates `data/wallet.json` with a sample balance and transaction history. Wallet balance and transactions persist across restarts. The demo user profile is held in memory and resets when the server restarts.
 
+Issued access tokens are stateless JWTs, so restarting the backend does not invalidate a token that the app is still holding. There is no sign-out endpoint: the app drops the token from memory, and the token simply expires on its own.
+
+> **Note:** `npm run dev` uses nodemon. Its watch scope is limited to `backend/src` (see `nodemonConfig` in `package.json`), so writing `data/wallet.json` during a transfer does not restart the server.
+
+## Authentication
+
+`POST /api/auth/login` issues a signed **HS256 JWT** access token. The token is the only credential the client needs: it carries the subject, issue time, expiry, and a unique token id (`jti`).
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vLXVzZXIiLCJpYXQiOjE3OTQ1NTA3MDksImV4cCI6MTc5NDU3OTUwOSwianRpIjoiMWI1Y2VhMzgtNDU1YS00NmE4LTk5ZTItYTcxNGUzMDc1ODgxIn0.8Clt0_IUw7hkk1PUUcNswlIxd7TPWhIsszMbDAYrhiQ",
+  "tokenType": "Bearer",
+  "expiresAt": "2026-11-13T14:18:29.000Z"
+}
+```
+
+Every other endpoint except `/api/health` requires the token in the `Authorization` header:
+
+```sh
+curl http://localhost:8000/api/wallet -H "Authorization: Bearer <token>"
+```
+
+The authentication middleware verifies the signature and expiry **before** the route handler runs, so an invalid or expired token never reaches application code. Failures return HTTP `401` with a specific `code`:
+
+| Code             | Meaning                                                        |
+| ---------------- | -------------------------------------------------------------- |
+| `MISSING_TOKEN`  | No `Authorization: Bearer` header was sent                       |
+| `INVALID_TOKEN`  | The signature did not verify, or the token was malformed         |
+| `TOKEN_EXPIRED`  | The signature verified but the `exp` claim has passed            |
+
+The backend is fully stateless: it keeps no session table, and there is no sign-out endpoint. The app clears the token from memory on sign-out, and the token expires on its own after `JWT_EXPIRES_IN_SECONDS`. Revoking a token before it expires would require a server-side denylist, which a stateless API deliberately avoids.
+
 ## Local development settings
 
 The backend reads these environment variables at startup:
@@ -25,6 +57,10 @@ The backend reads these environment variables at startup:
 | `API_RESPONSE_DELAY_MS`  |  `1000` | Central delay before each response in milliseconds; set to `0` to disable                  |
 | `FORCE_API_401`          |    `0` | Return HTTP 401 for every request when set to `1` (local UI error-state testing)             |
 | `FORCE_API_500`          |    `0` | Return HTTP 500 for every request when set to `1` (local UI error-state testing)             |
+| `JWT_SECRET`             | dev key | Secret used to sign and verify access tokens; at least 16 characters                      |
+| `JWT_EXPIRES_IN_SECONDS` | `28800` | Access token lifetime in seconds (8 hours); valid range is 60–604800                     |
+
+`JWT_SECRET` must stay the same across restarts, otherwise tokens issued before a restart stop verifying. The server prints a warning at startup when the default secret is in use.
 
 For example, start the dev server with 200 seed transactions and no artificial delay:
 
@@ -97,6 +133,7 @@ An invalid phone number returns HTTP `400`. A valid number with no match returns
 
 | Method | Path                           | Purpose                                          |
 | ------ | ------------------------------ | ------------------------------------------------ |
+| `POST` | `/api/auth/login`              | Issue a JWT access token (no token required)      |
 | `GET`  | `/api/health`                  | Check whether the API is running                 |
 | `GET`  | `/user`                        | Read the in-memory demo user's profile           |
 | `GET`  | `/api/recipients`              | List demo recipients                             |
@@ -109,3 +146,5 @@ The earlier `/api/wallet` and `/api/transactions` paths remain aliases for the H
 ## Demo data and limitations
 
 The JSON file store is for a single local demo instance; it is not a production database or a multi-user financial system. The user and recipient records are fictional. No real financial credentials or payment processing are involved.
+
+The access token uses a single shared symmetric secret and the demo login accepts no credentials at all, so it demonstrates the token lifecycle rather than protecting anything. A real deployment would need per-user credentials, a secret that is never committed to the repository, and a refresh-token flow for long-lived sessions.

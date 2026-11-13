@@ -10,14 +10,12 @@ enum APIClientError: Error {
     case network(Error)
     case decoding(Error)
     case encoding(Error)
-    case authenticationStorage(Error)
 
     var userMessage: String {
         switch self {
         case let .httpStatus(_, message):
             return message
-        case .invalidURL, .invalidResponse, .network(_), .decoding(_), .encoding,
-            .authenticationStorage(_):
+        case .invalidURL, .invalidResponse, .network(_), .decoding(_), .encoding:
             return Self.genericUserMessage
         }
     }
@@ -43,7 +41,7 @@ private struct APIErrorBody: Decodable {
 final class APIClient {
     private let baseUrl: URL
     private let session: URLSession
-    private let authTokenStore: AuthTokenStore
+    private let sessionTokenStore: SessionTokenStore
     private let sessionManager: SessionManager
     private let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "SwiftPay",
@@ -53,12 +51,12 @@ final class APIClient {
     init(
         baseUrl: URL,
         session: URLSession,
-        authTokenStore: AuthTokenStore,
+        sessionTokenStore: SessionTokenStore,
         sessionManager: SessionManager
     ) {
         self.baseUrl = baseUrl
         self.session = session
-        self.authTokenStore = authTokenStore
+        self.sessionTokenStore = sessionTokenStore
         self.sessionManager = sessionManager
     }
 
@@ -108,14 +106,8 @@ final class APIClient {
     ) async throws {
         guard required else { return }
 
-        do {
-            guard let token = try await authTokenStore.fetchToken() else { return }
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } catch {
-            let apiError = APIClientError.authenticationStorage(error)
-            log(apiError, for: request)
-            throw apiError
-        }
+        guard let token = await sessionTokenStore.fetchToken() else { return }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 
     private func makeRequest(

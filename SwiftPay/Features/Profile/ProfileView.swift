@@ -84,11 +84,14 @@ private struct ProfileScreen: View {
             Button(role: .destructive) {
                 isShowingLogoutConfirmation = true
             } label: {
-                Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 40)
-                    .background(Color.red.opacity(0.08), in: Capsule())
+                Label(
+                    "Log Out",
+                    systemImage: "rectangle.portrait.and.arrow.right"
+                )
+                .font(.caption.weight(.semibold))
+                .padding(.horizontal, 12)
+                .frame(minHeight: 40)
+                .background(Color.red.opacity(0.08), in: Capsule())
             }
             .buttonStyle(.plain)
             .padding(.trailing, 20)
@@ -106,8 +109,9 @@ private struct ProfileScreen: View {
                     }
                 }
             )
-            .presentationDetents([.height(220)])
-            .presentationDragIndicator(.visible)
+            .presentationDetents([
+                .height(LogoutConfirmationMetrics.presentedHeight)
+            ])
             .presentationBackground(Color(uiColor: .systemBackground))
         }
     }

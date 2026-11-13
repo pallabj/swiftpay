@@ -1,11 +1,29 @@
 import SwiftUI
 
+/// Layout metrics for the logout confirmation sheet.
+///
+/// The sheet is presented at a fixed height and its content fills that height,
+/// so the heading sits at the top of the sheet and the buttons sit at the
+/// bottom. The gap between them is a minimum: any extra room in the sheet is
+/// shared out between the two.
+enum LogoutConfirmationMetrics {
+    static let outerPadding: CGFloat = 16
+    static let titleHeight: CGFloat = 24
+    static let subtitleHeight: CGFloat = 40
+    static let textStackSpacing: CGFloat = 5
+    static let buttonHeight: CGFloat = 50
+
+    /// Height the sheet is presented at.
+    static let presentedHeight: CGFloat = 200
+}
+
 struct LogoutConfirmationView: View {
     let onCancel: () -> Void
     let onConfirm: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 0) {
+            Spacer(minLength: 16)
             HStack(alignment: .center, spacing: 12) {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
                     .font(.system(size: 19, weight: .semibold))
@@ -20,30 +38,47 @@ struct LogoutConfirmationView: View {
                     Text("You’ll need to log in again to access your wallet.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(2)
+                        .frame(
+                            height: LogoutConfirmationMetrics.subtitleHeight,
+                            alignment: .top
+                        )
                 }
+                .fixedSize(horizontal: false, vertical: true)
 
                 Spacer(minLength: 0)
             }
-            .padding(.top, 16)
 
-            Button(role: .destructive, action: onConfirm) {
-                Text("Log Out")
+            HStack {
+                Button(role: .destructive, action: onConfirm) {
+                    Text("Log Out")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: LogoutConfirmationMetrics.buttonHeight)
+                        .background(
+                            .red,
+                            in: RoundedRectangle(cornerRadius: 14)
+                        )
+                }
+                .buttonStyle(.plain)
+                Button("Cancel", action: onCancel)
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 36)
-                    .background(.red, in: RoundedRectangle(cornerRadius: 14))
+                    .frame(height: LogoutConfirmationMetrics.buttonHeight)
             }
-            .buttonStyle(.plain)
-
-            Button("Cancel", action: onCancel)
-                .font(.headline)
-                .foregroundStyle(.primary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 36)
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity,
+                alignment: .bottom
+            )
         }
-        .padding(22)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(LogoutConfirmationMetrics.outerPadding)
+        .frame(
+            maxWidth: .infinity,
+            maxHeight: .infinity,
+            alignment: .top
+        )
     }
 }

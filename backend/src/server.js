@@ -1,11 +1,17 @@
 const express = require("express");
 const { randomUUID } = require("node:crypto");
-const { demoUser, readState, writeState, createTransfer } = require("./store");
+const jwt = require("jsonwebtoken");
+const {
+  demoUser,
+  readState,
+  writeState,
+  createTransfer,
+} = require("./store");
 const config = require("./config");
 
 const app = express();
 const port = config.port;
-const activeAuthTokens = new Map();
+const jwtAlgorithm = "HS256";
 const simulatedTransferFailures = new Map([
   [
     1010,
@@ -67,27 +73,67 @@ app.use((_request, response, next) => {
 
 app.use(express.json({ limit: "16kb" }));
 
+function issueAccessToken(userId) {
+  return jwt.sign(
+    { sub: userId },
+    config.jwtSecret,
+    {
+      algorithm: jwtAlgorithm,
+      expiresIn: config.jwtExpiresInSeconds,
+      jwtid: randomUUID(),
+    },
+  );
+}
+
+function readBearerToken(request) {
+  const authorization = request.get("Authorization") ?? "";
+  const bearerMatch = authorization.match(/^Bearer\s+([^\s]+)$/i);
+  return bearerMatch ? bearerMatch[1] : null;
+}
+
 app.post(["/api/auth/login", "/auth/login"], (_request, response) => {
-  const token = randomUUID();
-  activeAuthTokens.set(token, demoUser.id);
-  return response.json({ token });
+  const token = issueAccessToken(demoUser.id);
+  const { exp } = jwt.decode(token);
+
+  return response.json({
+    token,
+    tokenType: "Bearer",
+    expiresAt: new Date(exp * 1000).toISOString(),
+  });
 });
 
 app.use((request, response, next) => {
-  const authorization = request.get("Authorization") ?? "";
-  const bearerMatch = authorization.match(/^Bearer\s+([^\s]+)$/i);
-  const userId = bearerMatch ? activeAuthTokens.get(bearerMatch[1]) : undefined;
+  const token = readBearerToken(request);
 
-  if (!userId) {
+  if (!token) {
     return response.status(401).json({
       error: {
-        code: "UNAUTHORIZED",
-        message: "Your session has expired. Please log in again.",
+        code: "MISSING_TOKEN",
+        message: "An access token is required for this request.",
       },
     });
   }
 
-  request.authenticatedUserId = userId;
+  let claims;
+  try {
+    // The signature is verified here, before any protected route runs, so an
+    // expired or tampered token can never reach the route handlers.
+    claims = jwt.verify(token, config.jwtSecret, {
+      algorithms: [jwtAlgorithm],
+    });
+  } catch (error) {
+    const isExpired = error instanceof jwt.TokenExpiredError;
+    return response.status(401).json({
+      error: {
+        code: isExpired ? "TOKEN_EXPIRED" : "INVALID_TOKEN",
+        message: isExpired
+          ? "Your session has expired. Please log in again."
+          : "Your access token is not valid. Please log in again.",
+      },
+    });
+  }
+
+  request.authenticatedUserId = claims.sub;
   return next();
 });
 
@@ -406,4 +452,8 @@ app.listen(port, () => {
   const forcedAPIStatus = config.forceAPI401 ? 401 : config.forceAPI500 ? 500 : "disabled";
   console.log(`Forced API status: ${forcedAPIStatus}`);
   console.log(`Configured demo transaction count: ${config.seedTransactionCount}`);
+  console.log(`Access tokens: ${jwtAlgorithm}, valid for ${config.jwtExpiresInSeconds} s`);
+  if (config.usesDefaultJWTSecret) {
+    console.log("WARNING: using the default JWT_SECRET. Set JWT_SECRET before real use.");
+  }
 });

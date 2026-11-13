@@ -3,7 +3,7 @@ import SwiftData
 
 struct AppDependencies {
     let modelContainer: ModelContainer
-    let authTokenStore: AuthTokenStore
+    let sessionTokenStore: SessionTokenStore
     let cachedWalletStore: CachedWalletStore
     let cachedTransactionStore: CachedTransactionStore
     let quickContactStore: QuickContactStore
@@ -23,20 +23,19 @@ struct AppDependencies {
         }
 
         let container = try ModelContainer(
-            for: CachedAuthToken.self,
-            CachedWallet.self,
+            for: CachedWallet.self,
             CachedTransaction.self,
             CachedTransactionPagination.self,
             CachedQuickRecipient.self
         )
-        let authTokenStore = AuthTokenStore(modelContainer: container)
+        let sessionTokenStore = SessionTokenStore()
         let cachedWalletStore = CachedWalletStore(modelContainer: container)
         let cachedTransactionStore = CachedTransactionStore(
             modelContainer: container
         )
         let quickContactStore = QuickContactStore(modelContainer: container)
         let sessionManager = SessionManager(
-            authTokenStore: authTokenStore,
+            sessionTokenStore: sessionTokenStore,
             cachedWalletStore: cachedWalletStore,
             cachedTransactionStore: cachedTransactionStore,
             quickContactStore: quickContactStore
@@ -44,19 +43,19 @@ struct AppDependencies {
         let apiClient = APIClient(
             baseUrl: baseURL,
             session: .shared,
-            authTokenStore: authTokenStore,
+            sessionTokenStore: sessionTokenStore,
             sessionManager: sessionManager
         )
 
         modelContainer = container
-        self.authTokenStore = authTokenStore
+        self.sessionTokenStore = sessionTokenStore
         self.cachedWalletStore = cachedWalletStore
         self.cachedTransactionStore = cachedTransactionStore
         self.quickContactStore = quickContactStore
         self.sessionManager = sessionManager
         authenticationRepository = AuthenticationRepository(
             apiClient: apiClient,
-            authTokenStore: authTokenStore
+            sessionTokenStore: sessionTokenStore
         )
         walletRepository = WalletRepository(
             apiClient: apiClient,

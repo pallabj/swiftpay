@@ -6,19 +6,19 @@ final class SessionManager: ObservableObject {
     @Published private(set) var isRestoringSession = true
     @Published private(set) var isAuthenticated = false
 
-    private let authTokenStore: AuthTokenStore
+    private let sessionTokenStore: SessionTokenStore
     private let cachedWalletStore: CachedWalletStore
     private let cachedTransactionStore: CachedTransactionStore
     private let quickContactStore: QuickContactStore
     private var isHandlingUnauthorized = false
 
     init(
-        authTokenStore: AuthTokenStore,
+        sessionTokenStore: SessionTokenStore,
         cachedWalletStore: CachedWalletStore,
         cachedTransactionStore: CachedTransactionStore,
         quickContactStore: QuickContactStore
     ) {
-        self.authTokenStore = authTokenStore
+        self.sessionTokenStore = sessionTokenStore
         self.cachedWalletStore = cachedWalletStore
         self.cachedTransactionStore = cachedTransactionStore
         self.quickContactStore = quickContactStore
@@ -26,11 +26,10 @@ final class SessionManager: ObservableObject {
 
     func restoreSession() async {
         defer { isRestoringSession = false }
-        do {
-            isAuthenticated = try await authTokenStore.fetchToken() != nil
-        } catch {
-            isAuthenticated = false
-        }
+
+        // The access token is held in memory only, so a relaunch always starts
+        // from a signed out state.
+        isAuthenticated = await sessionTokenStore.fetchToken() != nil
     }
 
     func didLogin() {
@@ -53,11 +52,7 @@ final class SessionManager: ObservableObject {
         URLCache.shared.removeAllCachedResponses()
 
         var failures: [String] = []
-        do {
-            try await authTokenStore.clearToken()
-        } catch {
-            failures.append("auth token: \(String(reflecting: error))")
-        }
+        await sessionTokenStore.clearToken()
         do {
             try await cachedWalletStore.clear()
         } catch {

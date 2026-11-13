@@ -8,11 +8,11 @@ private struct DemoLoginResponse: Decodable {
 
 struct AuthenticationRepository {
     private let apiClient: APIClient
-    private let authTokenStore: AuthTokenStore
+    private let sessionTokenStore: SessionTokenStore
 
-    init(apiClient: APIClient, authTokenStore: AuthTokenStore) {
+    init(apiClient: APIClient, sessionTokenStore: SessionTokenStore) {
         self.apiClient = apiClient
-        self.authTokenStore = authTokenStore
+        self.sessionTokenStore = sessionTokenStore
     }
 
     func login() async throws {
@@ -23,6 +23,6 @@ struct AuthenticationRepository {
             requiresAuthentication: false,
             as: DemoLoginResponse.self
         )
-        try await authTokenStore.saveToken(response.token)
+        await sessionTokenStore.saveToken(response.token)
     }
 }

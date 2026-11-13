@@ -183,4 +183,9 @@ function createTransfer(state, { recipient, amount, note }) {
   return transaction;
 }
 
-module.exports = { demoUser, readState, writeState, createTransfer };
+module.exports = {
+  demoUser,
+  readState,
+  writeState,
+  createTransfer,
+};
